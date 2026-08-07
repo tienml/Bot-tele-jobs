@@ -8,12 +8,28 @@ Chỉ tin **thực tập** được gửi qua Telegram. Tin **fresher/junior** v
 
 | Nguồn | Phương thức | Ghi chú |
 |---|---|---|
-| **ITviec** | Scrape HTML | Selector `div.job-card`, ổn định |
+| **ITviec** | Scrape HTML qua TLS giả lập Chrome | Selector `div.job-card`. Xem lưu ý bên dưới |
 | **VietnamWorks** | Public JSON API | `ms.vietnamworks.com/job-search`, lọc Hà Nội bằng `cityId=24` |
 | **Glints** | JSON trong `__NEXT_DATA__` | Bỏ qua filter địa điểm trên URL nên phải lọc Hà Nội ở `filters.py` |
 | **LinkedIn** | Endpoint `jobs-guest` | Không cần API/đăng nhập. Xem lưu ý bên dưới |
 
 Đã thử và không dùng được (scraper đã xoá khỏi repo): **TopDev** chặn ngay ở tầng TLS handshake, **TopCV** / **JobsGO** trả Cloudflare 403, **Facebook** để tin thực tập IT trong group kín nên phải đăng nhập.
+
+### Lưu ý về ITviec (Cloudflare 403)
+
+ITviec đứng sau Cloudflare. Gọi bằng `requests` từ runner GitHub Actions luôn trả **403**, dù cùng đoạn code chạy ở máy nhà vẫn ra đủ 82 tin. Thêm header giống trình duyệt **không** cứu được, vì Cloudflare còn nhận dạng client qua **TLS fingerprint** (JA3/JA4) — OpenSSL của Python có fingerprint riêng, khác Chrome, nên chỉ cần nhìn cái bắt tay TLS là biết không phải trình duyệt.
+
+Cách giải: `curl_cffi` giả lập đúng TLS fingerprint của Chrome. Nguồn thử ba đường, dừng ở đường nào chạy được:
+
+| # | Đường | Ghi chú |
+|---|---|---|
+| 1 | TLS giả lập Chrome (`curl_cffi`) | Đường chính, qua được Cloudflare. Thực đo: 82 tin |
+| 2 | `requests` trực tiếp | Nhanh nhất, chạy tốt ở máy nhà |
+| 3 | Reader `r.jina.ai` | Họ tự mở trang bằng trình duyệt thật rồi trả markdown. Có hạn mức cho IP không token |
+
+Đường nào bị chặn thì bỏ hẳn cho các query còn lại, đỡ mất thời gian gọi những request chắc chắn 403. Đổi phiên bản giả lập bằng biến `ITVIEC_IMPERSONATE` (mặc định `chrome124`).
+
+Các hướng đã thử và tắc: `html.duckduckgo.com` trả HTTP 202 (chặn bot); `lite.duckduckgo.com` trả 200 nhưng chỉ ra trang danh sách, không ra tin; Google cần JS, Bing trả captcha.
 
 ### Lưu ý về LinkedIn
 - LinkedIn **tự nới lỏng** truy vấn nhiều từ: query `"devops intern"` bị hiểu thành `"devops"` nên trả về toàn tin Senior/Middle. Vì vậy chỉ hỏi LinkedIn theo **cấp bậc** (`intern`, `thực tập`...) rồi để `filters.py` lọc ngành.
@@ -29,6 +45,8 @@ docs/index.html               danh sách + thống kê ngày mới nhất
 docs/archive/YYYY-MM-DD.html  bản lưu từng ngày
 docs/data.json                số liệu theo ngày (vẽ biểu đồ xu hướng)
 ```
+
+Trang không dùng JavaScript: bộ lọc theo nhóm nghề làm bằng radio ẩn cộng selector `:checked ~`, nên mở bằng `file://` hay qua Pages đều chạy. Giao diện tự đổi sáng/tối theo `prefers-color-scheme`.
 
 Bật một lần ở repo: **Settings → Pages → Source: Deploy from a branch → main / docs**.
 
@@ -121,7 +139,9 @@ Tạo `sources/ten_nguon.py` kế thừa `BaseSource`, implement `fetch()` trả
 Thứ tự nên thử khi khảo sát một nền tảng mới:
 1. **Endpoint JSON/guest nội bộ** — mở DevTools tab Network, lọc XHR, xem trang tự gọi API nào. Cho dữ liệu sạch nhất.
 2. **Scrape HTML trực tiếp** — được khi site render server-side và không có Cloudflare.
-3. **Search engine → URL → scrape** — chỉ khi 1 và 2 đều tắc. Google yêu cầu JS, Bing trả captcha; chỉ DuckDuckGo (`html.duckduckgo.com`) còn scrape được, nhưng kết quả toàn trang danh sách nên hiệu quả thấp.
+3. **Giả lập TLS fingerprint** (`curl_cffi`, `impersonate="chrome124"`) — dùng khi 2 trả 403 mà máy nhà vẫn vào được, tức là bị chặn theo fingerprint/IP. Đây là cách đang dùng cho ITviec.
+4. **Reader proxy** (`r.jina.ai/<url>`) — bên thứ ba mở trang bằng trình duyệt thật rồi trả markdown. Có hạn mức cho IP không token, gọi dồn dập là bị chặn.
+5. **Search engine → URL → scrape** — hiệu quả thấp nhất. Google yêu cầu JS, Bing trả captcha, `html.duckduckgo.com` trả HTTP 202; `lite.duckduckgo.com` còn chạy nhưng chỉ ra trang danh sách chứ không ra từng tin.
 
 ### Số tin ít thì làm sao
 Thị trường thực tập DevOps/Java/Data Engineer ở Hà Nội thực sự mỏng — khoảng 3-5 tin trên tổng ~500 tin gần đây từ 4 nguồn. Muốn nhiều hơn phải nới một trong ba điều kiện: nhận thêm fresher, mở rộng ngành, hoặc bỏ giới hạn Hà Nội.

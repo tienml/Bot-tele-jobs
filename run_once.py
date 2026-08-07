@@ -108,22 +108,28 @@ async def main() -> None:
     # thư mục docs/ lên repo để GitHub Pages phục vụ.
     site_url = webpage.build(intern_jobs, fresher_jobs, today)
 
-    if not new_jobs:
-        msg = (
-            f"📋 <b>Cập nhật ngày {today.strftime('%d/%m/%Y')}</b>\n\n"
-            "😔 Hôm nay chưa có tin thực tập mới ở Hà Nội.\n"
-            f"Trang thống kê có {len(intern_jobs)} tin thực tập và "
-            f"{len(fresher_jobs)} tin fresher để tham khảo."
+    # Luôn liệt kê toàn bộ tin thực tập đang mở, không chỉ tin mới. Tin mới
+    # được gắn nhãn 🆕 để phân biệt. Trước đây khi filter_unsent() trả về 0
+    # (thường xảy ra vì jobs.db được commit ngược lại nên nhớ hết lịch sử),
+    # bot chỉ gửi mỗi cái link — mất luôn danh sách việc tiềm năng.
+    if intern_jobs:
+        new_ids = {j.job_id for j in new_jobs}
+        msg = format_summary(
+            intern_jobs, today, new_ids=new_ids, fresher_count=len(fresher_jobs)
         )
-        keyboard = make_site_keyboard(site_url, len(intern_jobs), len(fresher_jobs))
-    else:
-        msg = format_summary(new_jobs, today)
         keyboard = make_top_keyboard(
-            new_jobs,
+            intern_jobs,
             site_url=site_url,
             total=len(intern_jobs),
             fresher=len(fresher_jobs),
         )
+    else:
+        msg = (
+            f"📋 <b>Cập nhật ngày {today.strftime('%d/%m/%Y')}</b>\n\n"
+            "😔 Hôm nay không có tin thực tập nào đang mở ở Hà Nội.\n"
+            f"Trang thống kê có {len(fresher_jobs)} tin fresher để tham khảo."
+        )
+        keyboard = make_site_keyboard(site_url, 0, len(fresher_jobs))
 
     sent_ok = False
     bot = Bot(token=BOT_TOKEN)

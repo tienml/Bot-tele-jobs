@@ -50,6 +50,14 @@ USER_AGENT = (
 # Các từ khoá truy vấn (khớp URL slug: /it-jobs/{query}?city=ha-noi).
 ITVIEC_QUERIES = ["intern", "fresher", "devops", "java", "data-engineer"]
 
+# ITviec đứng sau Cloudflare, chặn theo TLS fingerprint chứ không chỉ theo
+# header — xem chú thích đầu sources/itviec.py. Đường chính là giả lập TLS
+# của Chrome qua curl_cffi; đây là phiên bản trình duyệt được giả lập.
+ITVIEC_IMPERSONATE = os.environ.get("ITVIEC_IMPERSONATE", "chrome124")
+# Reader r.jina.ai (đường dự phòng cuối) tự mở trang bằng trình duyệt thật
+# nên chậm hơn nhiều: thực đo 4-7 giây mỗi query.
+ITVIEC_READER_TIMEOUT = int(os.environ.get("ITVIEC_READER_TIMEOUT", "60"))
+
 # --- Nguồn VietnamWorks --------------------------------------------------
 # Chỉ dùng cụm ngắn; cụm dài > 2 từ thường trả về 0 hit từ API.
 VNW_QUERIES = ["intern", "thực tập", "devops", "java", "data engineer"]

@@ -13,6 +13,9 @@ Cấu trúc sinh ra:
     docs/index.html             — danh sách + thống kê của ngày mới nhất
     docs/archive/YYYY-MM-DD.html — bản lưu từng ngày
     docs/data.json              — số liệu từng ngày, dùng vẽ biểu đồ
+
+Trang không dùng JavaScript. Phần lọc theo nhóm nghề làm bằng radio ẩn
+cộng selector `:checked ~`, nên mở bằng file:// hay qua Pages đều chạy.
 """
 from __future__ import annotations
 
@@ -27,305 +30,343 @@ from filters import CATEGORY_LABELS
 log = logging.getLogger(__name__)
 
 CATEGORY_ORDER = ["devops", "backend_java", "data_engineer"]
-CATEGORY_ICONS = {"devops": "🛠️", "backend_java": "☕", "data_engineer": "📊"}
+CATEGORY_ICONS = {"devops": "🛠", "backend_java": "☕", "data_engineer": "📊"}
 
 # Màu nhận dạng từng nguồn, giúp mắt phân biệt nhanh khi cuộn danh sách dài.
 SOURCE_COLORS = {
-    "ITviec": "#e0574f",
-    "VietnamWorks": "#4a9be0",
-    "Glints": "#2fc39b",
-    "LinkedIn": "#5b9cff",
+    "ITviec": "#f2705f",
+    "VietnamWorks": "#57a5f0",
+    "Glints": "#2ecfa4",
+    "LinkedIn": "#7c8cff",
 }
 
 _CSS = """
 :root {
-  --bg: #0e1015;
-  --bg-soft: #14171f;
-  --card: #171b23;
-  --card-hi: #1d222c;
-  --line: #262b36;
-  --line-soft: #1f242e;
-  --text: #eceef4;
-  --text-dim: #b6bdcd;
-  --muted: #848da3;
-  --accent: #6ba6ff;
-  --intern: #3ddc97;
-  --fresher: #f5a94f;
-  --radius: 14px;
-  --shadow: 0 1px 2px rgba(0,0,0,.35), 0 8px 24px -16px rgba(0,0,0,.7);
+  --bg: #0b0d12;
+  --bg-2: #0f1218;
+  --panel: rgba(255,255,255,.032);
+  --panel-2: rgba(255,255,255,.055);
+  --line: rgba(255,255,255,.085);
+  --line-2: rgba(255,255,255,.14);
+  --text: #f2f4f9;
+  --text-2: #b9c0d0;
+  --text-3: #7b8496;
+  --brand: #7aa2ff;
+  --intern: #35e0a1;
+  --fresher: #ffb454;
+  --r: 16px;
+  --r-sm: 11px;
+  --shadow: 0 1px 1px rgba(0,0,0,.4), 0 14px 40px -22px rgba(0,0,0,.9);
+  --glow: radial-gradient(120% 100% at 15% 0%, rgba(122,162,255,.16), transparent 60%),
+          radial-gradient(90% 80% at 90% 0%, rgba(53,224,161,.10), transparent 55%);
 }
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f6f7fa;
-    --bg-soft: #eef0f5;
-    --card: #ffffff;
-    --card-hi: #f4f6fa;
-    --line: #e0e4ec;
-    --line-soft: #eaedf3;
-    --text: #171a21;
-    --text-dim: #40485a;
-    --muted: #6b7488;
-    --accent: #1f63d6;
-    --intern: #10a06a;
-    --fresher: #c1741a;
-    --shadow: 0 1px 2px rgba(20,26,40,.06), 0 10px 24px -18px rgba(20,26,40,.35);
+    --bg: #fbfbfd;
+    --bg-2: #f2f4f9;
+    --panel: #ffffff;
+    --panel-2: #f5f7fb;
+    --line: #e6e9f0;
+    --line-2: #d4d9e4;
+    --text: #10131a;
+    --text-2: #444c5e;
+    --text-3: #737c8d;
+    --brand: #2b5fd9;
+    --intern: #08996a;
+    --fresher: #b56a10;
+    --shadow: 0 1px 1px rgba(16,20,30,.04), 0 14px 34px -24px rgba(16,20,30,.4);
+    --glow: radial-gradient(120% 100% at 15% 0%, rgba(43,95,217,.09), transparent 60%),
+            radial-gradient(90% 80% at 90% 0%, rgba(8,153,106,.07), transparent 55%);
   }
 }
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
-  padding: 0 0 72px;
+  padding: 0 0 80px;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        "Helvetica Neue", Arial, sans-serif;
+  font: 400 16px/1.62 ui-sans-serif, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
-.wrap { max-width: 860px; margin: 0 auto; padding: 0 18px; }
+.wrap { max-width: 940px; margin: 0 auto; padding: 0 20px; }
+a { color: var(--brand); }
 
 /* ---------- Header ---------- */
 header.top {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-2);
+  background-image: var(--glow);
   border-bottom: 1px solid var(--line);
-  background: linear-gradient(180deg, var(--bg-soft), var(--bg));
-  padding: 30px 0 22px;
-  margin-bottom: 26px;
+  padding: 44px 0 34px;
+  margin-bottom: 30px;
+}
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--text-3);
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 4px 12px; margin-bottom: 15px;
+}
+.eyebrow .live {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--intern); box-shadow: 0 0 0 3px rgba(53,224,161,.18);
 }
 h1 {
-  font-size: clamp(21px, 4.4vw, 27px);
-  line-height: 1.25;
-  margin: 0 0 8px;
-  letter-spacing: -.015em;
+  font-size: clamp(27px, 6vw, 42px);
+  line-height: 1.1;
+  margin: 0 0 12px;
+  letter-spacing: -.03em;
+  font-weight: 750;
 }
-.tagline { color: var(--text-dim); font-size: 14.5px; margin: 0; }
-.stamp { color: var(--muted); font-size: 13px; margin: 6px 0 0; }
+h1 .acc {
+  background: linear-gradient(96deg, var(--brand), var(--intern));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.tagline { color: var(--text-2); font-size: 15.5px; margin: 0; }
+.stamp {
+  color: var(--text-3); font-size: 13px; margin: 16px 0 0;
+  display: flex; flex-wrap: wrap; gap: 6px 14px;
+}
 
-/* ---------- Thống kê ---------- */
+/* ---------- Ô số liệu ---------- */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 13px;
 }
 .stat {
-  background: var(--card);
+  position: relative;
+  overflow: hidden;
+  background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--r);
   box-shadow: var(--shadow);
-  padding: 15px 16px;
-  min-height: 92px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  padding: 17px 18px 15px;
+}
+.stat::after {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
+  background: var(--bar, var(--line-2));
 }
 .stat .n {
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -.02em;
-  font-variant-numeric: tabular-nums;
+  font-size: 34px; font-weight: 750; line-height: 1.05;
+  letter-spacing: -.035em; font-variant-numeric: tabular-nums;
 }
 .stat .l {
-  color: var(--muted);
-  font-size: 12.5px;
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--text-3); font-size: 11.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; margin-top: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.stat.zero .n { color: var(--muted); }
+.stat.zero .n { color: var(--text-3); }
 
-/* ---------- Hàng chip nguồn ---------- */
-.chiprow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+/* ---------- Chip ---------- */
+.chiprow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
 .chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 4px 12px;
-  font-size: 13px;
-  color: var(--text-dim);
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 999px; padding: 5px 13px;
+  font-size: 13px; color: var(--text-2);
 }
 .chip b { color: var(--text); font-variant-numeric: tabular-nums; }
-.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 
 /* ---------- Tiêu đề mục ---------- */
 h2 {
-  font-size: 15px;
-  text-transform: uppercase;
-  letter-spacing: .07em;
-  color: var(--muted);
-  margin: 38px 0 14px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--line);
-  font-weight: 700;
+  display: flex; align-items: baseline; gap: 11px;
+  font-size: 12.5px; font-weight: 750; text-transform: uppercase;
+  letter-spacing: .11em; color: var(--text-3);
+  margin: 44px 0 16px;
+}
+h2::after {
+  content: ""; flex: 1; height: 1px; background: var(--line);
 }
 h3 {
-  font-size: 15.5px;
-  margin: 22px 0 10px;
-  font-weight: 650;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex; align-items: center; gap: 9px;
+  font-size: 16px; font-weight: 700; letter-spacing: -.01em;
+  margin: 26px 0 11px;
 }
-h3 .count {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-  background: var(--card-hi);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 1px 9px;
+h3 .ic {
+  display: grid; place-items: center;
+  width: 26px; height: 26px; flex: none;
+  border-radius: 8px; font-size: 13px;
+  background: var(--panel-2); border: 1px solid var(--line);
+}
+.count {
+  font-size: 11.5px; font-weight: 700; color: var(--text-3);
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 999px; padding: 2px 9px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- Thẻ job ---------- */
 .job {
   position: relative;
-  background: var(--card);
+  display: block;
+  background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r);
   box-shadow: var(--shadow);
-  padding: 14px 16px 13px 18px;
-  margin-bottom: 10px;
-  transition: transform .12s ease, border-color .12s ease;
+  padding: 16px 18px 15px 20px;
+  margin-bottom: 11px;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color .16s ease, background .16s ease, transform .16s ease;
 }
 .job::before {
-  content: "";
-  position: absolute;
-  left: 0; top: 10px; bottom: 10px;
-  width: 3px;
-  border-radius: 3px;
+  content: ""; position: absolute; left: 0; top: 14px; bottom: 14px;
+  width: 3px; border-radius: 0 3px 3px 0;
   background: var(--intern);
 }
 .job.fresher::before { background: var(--fresher); }
-.job:hover { transform: translateY(-1px); border-color: var(--accent); }
-.job .title {
-  display: block;
-  color: var(--text);
-  font-size: 16px;
-  font-weight: 650;
-  line-height: 1.4;
-  text-decoration: none;
+.job:hover {
+  border-color: var(--line-2);
+  background: var(--panel-2);
+  transform: translateY(-1px);
 }
-.job .title:hover { color: var(--accent); }
-.job .company { color: var(--text-dim); font-size: 14px; margin-top: 3px; }
+.job:hover .title { color: var(--brand); }
+.job .title {
+  font-size: 16.5px; font-weight: 680; line-height: 1.38;
+  letter-spacing: -.012em;
+  transition: color .16s ease;
+}
+.job .company {
+  color: var(--text-2); font-size: 14px; margin-top: 4px;
+  display: flex; align-items: center; gap: 7px;
+}
 .job .meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 8px;
-  margin-top: 9px;
-  font-size: 12.5px;
-  color: var(--muted);
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 6px 7px; margin-top: 11px;
+  font-size: 12.5px; color: var(--text-3);
 }
 .tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  border-radius: 6px;
-  padding: 2px 8px;
-  background: var(--card-hi);
-  border: 1px solid var(--line-soft);
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 7px; padding: 3px 9px;
+  background: var(--panel-2); border: 1px solid var(--line);
   white-space: nowrap;
 }
-.tag.src { font-weight: 600; }
-.tag.new { color: var(--intern); border-color: color-mix(in srgb, var(--intern) 40%, transparent); }
-.tag.pay { color: var(--intern); }
-.tag.cat { color: var(--text-dim); }
+.tag.src { font-weight: 650; color: var(--text-2); }
+.tag.hot {
+  color: var(--intern); font-weight: 650;
+  border-color: color-mix(in srgb, var(--intern) 34%, transparent);
+  background: color-mix(in srgb, var(--intern) 11%, transparent);
+}
+.tag.pay {
+  color: var(--intern); font-weight: 650;
+  border-color: color-mix(in srgb, var(--intern) 26%, transparent);
+}
+
+/* ---------- Lọc theo nhóm (không JS) ---------- */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+.filters input { position: absolute; opacity: 0; pointer-events: none; }
+.filters label {
+  cursor: pointer; user-select: none;
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 999px; padding: 7px 15px;
+  font-size: 13.5px; font-weight: 600; color: var(--text-2);
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+.filters label:hover { border-color: var(--line-2); color: var(--text); }
+/* Radio nào đang chọn thì nhãn tương ứng sáng lên. Mọi radio đều nằm
+   trước .filters và .cats trong DOM nên `~` chạm được tới cả hai. */
+#f-all:checked    ~ .filters label[for="f-all"],
+#f-devops:checked ~ .filters label[for="f-devops"],
+#f-java:checked   ~ .filters label[for="f-java"],
+#f-data:checked   ~ .filters label[for="f-data"] {
+  background: var(--text); color: var(--bg); border-color: var(--text);
+}
+/* Mặc định ẩn hết, rồi hiện lại nhóm khớp lựa chọn. */
+#f-devops:checked ~ .cats .cat:not([data-cat="devops"]),
+#f-java:checked   ~ .cats .cat:not([data-cat="backend_java"]),
+#f-data:checked   ~ .cats .cat:not([data-cat="data_engineer"]) { display: none; }
 
 /* ---------- Biểu đồ xu hướng ---------- */
-.chart {
-  display: flex;
-  align-items: flex-end;
-  gap: 7px;
-  height: 132px;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 14px 14px 10px;
+.chart-box {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--r); box-shadow: var(--shadow);
+  padding: 18px 18px 12px;
 }
+.chart { display: flex; align-items: flex-end; gap: 6px; height: 130px; }
 .chart .col {
-  flex: 1;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
+  flex: 1; height: 100%; display: flex; flex-direction: column;
+  justify-content: flex-end; align-items: center; gap: 5px;
 }
-.chart .v { font-size: 11px; color: var(--muted); margin-bottom: 4px;
-            font-variant-numeric: tabular-nums; }
+.chart .v {
+  font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums;
+}
 .chart .bar {
-  width: 100%;
-  min-height: 3px;
-  border-radius: 5px 5px 0 0;
-  background: linear-gradient(180deg, var(--intern), color-mix(in srgb, var(--intern) 45%, transparent));
+  width: 100%; min-height: 3px; border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(180deg, var(--intern),
+              color-mix(in srgb, var(--intern) 22%, transparent));
 }
 .chart .col.zero .bar { background: var(--line); }
-.xaxis { display: flex; gap: 7px; margin-top: 7px; padding: 0 14px; }
-.xaxis div { flex: 1; text-align: center; font-size: 10.5px; color: var(--muted); }
+.chart .col.last .bar {
+  background: linear-gradient(180deg, var(--brand),
+              color-mix(in srgb, var(--brand) 22%, transparent));
+}
+.xaxis { display: flex; gap: 6px; margin-top: 9px; }
+.xaxis div {
+  flex: 1; text-align: center; font-size: 10.5px; color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
 
 /* ---------- Mục fresher thu gọn ---------- */
 details.fold {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 0 16px;
-  box-shadow: var(--shadow);
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--r); box-shadow: var(--shadow); padding: 0 18px;
 }
 details.fold > summary {
-  cursor: pointer;
-  padding: 15px 0;
-  font-weight: 650;
-  font-size: 15px;
-  list-style: none;
-  display: flex;
-  align-items: center;
-  gap: 9px;
+  cursor: pointer; list-style: none;
+  display: flex; align-items: center; gap: 10px;
+  padding: 17px 0; font-size: 15.5px; font-weight: 700;
 }
 details.fold > summary::-webkit-details-marker { display: none; }
 details.fold > summary::before {
-  content: "▸";
-  color: var(--fresher);
-  transition: transform .15s ease;
+  content: "›"; color: var(--fresher); font-size: 20px; line-height: 1;
+  transition: transform .18s ease;
 }
 details.fold[open] > summary::before { transform: rotate(90deg); }
-details.fold > summary .count {
-  font-size: 12px; font-weight: 600; color: var(--muted);
-  background: var(--card-hi); border: 1px solid var(--line);
-  border-radius: 999px; padding: 1px 9px;
+details.fold .inner { padding-bottom: 16px; }
+details.fold .note {
+  color: var(--text-3); font-size: 13.5px; margin: 0 0 16px;
+  padding-left: 12px; border-left: 2px solid var(--line-2);
 }
-details.fold .inner { padding-bottom: 14px; }
-details.fold .note { color: var(--muted); font-size: 13.5px; margin: 0 0 14px; }
-details.fold .job { background: var(--card-hi); }
+details.fold .job { background: var(--panel-2); }
 
 /* ---------- Khác ---------- */
 .empty {
-  color: var(--muted);
-  font-size: 14.5px;
-  background: var(--card);
-  border: 1px dashed var(--line);
-  border-radius: var(--radius);
-  padding: 18px;
-  text-align: center;
+  color: var(--text-3); font-size: 14.5px; text-align: center;
+  background: var(--panel); border: 1px dashed var(--line-2);
+  border-radius: var(--r); padding: 30px 20px;
 }
-ul.arch { list-style: none; padding: 0; margin: 0;
-          display: flex; flex-wrap: wrap; gap: 8px; }
-ul.arch a {
-  display: block; background: var(--card); border: 1px solid var(--line);
-  border-radius: 8px; padding: 6px 11px; color: var(--accent);
-  text-decoration: none; font-size: 13.5px;
+.arch { display: flex; flex-wrap: wrap; gap: 8px; list-style: none;
+        padding: 0; margin: 0; }
+.arch a {
+  display: block; background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--r-sm); padding: 7px 12px; font-size: 13.5px;
+  color: var(--text-2); text-decoration: none;
+  font-variant-numeric: tabular-nums;
 }
-ul.arch a:hover { border-color: var(--accent); }
-.backlink { display: inline-block; margin-top: 30px; color: var(--accent);
-            text-decoration: none; font-size: 14.5px; }
+.arch a:hover { border-color: var(--line-2); color: var(--text); }
+.backlink {
+  display: inline-flex; align-items: center; gap: 7px;
+  margin-top: 34px; font-size: 14.5px; text-decoration: none;
+}
+.backlink:hover { text-decoration: underline; }
 footer {
-  margin-top: 46px; padding-top: 18px;
+  margin-top: 52px; padding-top: 20px;
   border-top: 1px solid var(--line);
-  color: var(--muted); font-size: 13px;
+  color: var(--text-3); font-size: 13px;
+}
+@media (max-width: 560px) {
+  header.top { padding: 32px 0 26px; }
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat .n { font-size: 28px; }
+  .job { padding: 14px 15px 13px 17px; }
 }
 """
 
@@ -351,48 +392,59 @@ def _source_color(source: str) -> str:
 
 
 def _job_html(job, today: date, css_class: str = "") -> str:
-    """Một thẻ job: tiêu đề, công ty, rồi hàng nhãn phụ."""
+    """Một thẻ job. Cả thẻ là một link để bấm ở đâu cũng mở được tin."""
     tags: list[str] = []
 
     age = _age_label(job, today)
     if age:
         is_new = job.posted_date is not None and (today - job.posted_date).days <= 1
-        tags.append(f'<span class="tag{" new" if is_new else ""}">🕒 {_esc(age)}</span>')
-
+        tags.append(
+            f'<span class="tag{" hot" if is_new else ""}">{"✦" if is_new else "🕒"} '
+            f"{_esc(age)}</span>"
+        )
+    if job.location:
+        tags.append(f'<span class="tag">📍 {_esc(job.location)}</span>')
+    if job.salary:
+        tags.append(f'<span class="tag pay">💰 {_esc(job.salary)}</span>')
     tags.append(
         f'<span class="tag src">'
         f'<i class="dot" style="background:{_source_color(job.source)}"></i>'
         f"{_esc(job.source)}</span>"
     )
-    if job.category:
-        icon = CATEGORY_ICONS.get(job.category, "")
-        label = CATEGORY_LABELS.get(job.category, job.category)
-        tags.append(f'<span class="tag cat">{icon} {_esc(label)}</span>')
-    if job.location:
-        tags.append(f'<span class="tag">📍 {_esc(job.location)}</span>')
-    if job.salary:
-        tags.append(f'<span class="tag pay">💰 {_esc(job.salary)}</span>')
 
-    company = (
-        f'<div class="company">{_esc(job.company)}</div>' if job.company else ""
-    )
+    company = ""
+    if job.company:
+        company = (
+            f'<div class="company">'
+            f'<i class="dot" style="background:{_source_color(job.source)}"></i>'
+            f"{_esc(job.company)}</div>"
+        )
+    klass = f"job {css_class}".strip()
     return (
-        f'<div class="job {css_class}">'
-        f'<a class="title" href="{_esc(job.url)}" target="_blank" rel="noopener">'
-        f"{_esc(job.title)}</a>"
+        f'<a class="{klass}" href="{_esc(job.url)}"'
+        f' target="_blank" rel="noopener">'
+        f'<div class="title">{_esc(job.title)}</div>'
         f"{company}"
         f'<div class="meta">{"".join(tags)}</div>'
-        f"</div>"
+        f"</a>"
     )
 
 
-def _section(title: str, jobs: list, today: date, css_class: str = "") -> str:
-    """Một nhóm job có tiêu đề. Trả về chuỗi rỗng nếu nhóm trống."""
+def _section(cat: str, jobs: list, today: date, css_class: str = "") -> str:
+    """Một nhóm nghề có tiêu đề. Trả về chuỗi rỗng nếu nhóm trống.
+
+    `data-cat` để bộ lọc CSS ẩn/hiện được nhóm mà không cần JavaScript.
+    """
     if not jobs:
         return ""
+    icon = CATEGORY_ICONS.get(cat, "•")
+    label = CATEGORY_LABELS.get(cat, cat)
     cards = "".join(_job_html(j, today, css_class) for j in jobs)
     return (
-        f"<h3>{_esc(title)}<span class=\"count\">{len(jobs)}</span></h3>{cards}"
+        f'<div class="cat" data-cat="{_esc(cat)}">'
+        f'<h3><span class="ic">{icon}</span>{_esc(label)}'
+        f'<span class="count">{len(jobs)}</span></h3>'
+        f"{cards}</div>"
     )
 
 
@@ -412,15 +464,16 @@ def _stats_html(intern_jobs: list, fresher_jobs: list, today: date) -> str:
 
     def cell(value: int, label: str, color: str = "") -> str:
         style = f' style="color:{color}"' if color and value else ""
+        bar = f' style="--bar:{color}"' if color and value else ""
         zero = " zero" if not value else ""
         return (
-            f'<div class="stat{zero}"><div class="n"{style}>{value}</div>'
+            f'<div class="stat{zero}"{bar}><div class="n"{style}>{value}</div>'
             f'<div class="l">{label}</div></div>'
         )
 
     cells = [
         cell(len(intern_jobs), "Thực tập", "var(--intern)"),
-        cell(fresh_today, "Đăng hôm nay"),
+        cell(fresh_today, "Đăng hôm nay", "var(--brand)"),
         cell(len(fresher_jobs), "Fresher", "var(--fresher)"),
         cell(len(by_source), "Nguồn có tin"),
     ]
@@ -453,18 +506,54 @@ def _trend_html(history: dict) -> str:
 
     values = [history[d].get("intern", 0) for d in days]
     peak = max(values) or 1
-    cols = "".join(
-        f'<div class="col{" zero" if not v else ""}">'
-        f'<span class="v">{v}</span>'
-        f'<div class="bar" style="height:{max(3, round(v / peak * 100))}%"></div>'
-        f"</div>"
-        for v in values
-    )
+    cols = []
+    for i, v in enumerate(values):
+        klass = "col"
+        if not v:
+            klass += " zero"
+        if i == len(values) - 1:
+            klass += " last"
+        cols.append(
+            f'<div class="{klass}"><span class="v">{v}</span>'
+            f'<div class="bar" style="height:{max(3, round(v / peak * 100))}%"></div>'
+            f"</div>"
+        )
     labels = "".join(f"<div>{d[8:10]}/{d[5:7]}</div>" for d in days)
     return (
         f"<h2>Xu hướng {len(days)} ngày</h2>"
-        f'<div class="chart">{cols}</div><div class="xaxis">{labels}</div>'
+        f'<div class="chart-box"><div class="chart">{"".join(cols)}</div>'
+        f'<div class="xaxis">{labels}</div></div>'
     )
+
+
+def _filters_html(intern_jobs: list) -> str:
+    """Nút lọc theo nhóm nghề, làm bằng radio ẩn + CSS (không cần JS).
+
+    Các radio phải nằm TRƯỚC .filters và .cats trong DOM để selector
+    `:checked ~` chạm được tới chúng.
+    """
+    counts = {
+        cat: sum(1 for j in intern_jobs if j.category == cat)
+        for cat in CATEGORY_ORDER
+    }
+    ids = {"devops": "f-devops", "backend_java": "f-java", "data_engineer": "f-data"}
+
+    inputs = ['<input type="radio" name="cat" id="f-all" checked>']
+    labels = [f'<label for="f-all">Tất cả <span class="count">'
+              f'{len(intern_jobs)}</span></label>']
+    for cat in CATEGORY_ORDER:
+        if not counts[cat]:
+            continue  # nhóm trống thì không cần nút lọc
+        fid = ids[cat]
+        inputs.append(f'<input type="radio" name="cat" id="{fid}">')
+        labels.append(
+            f'<label for="{fid}">{CATEGORY_ICONS.get(cat, "")} '
+            f'{_esc(CATEGORY_LABELS.get(cat, cat))}'
+            f'<span class="count">{counts[cat]}</span></label>'
+        )
+    if len(labels) < 3:
+        return ""  # chỉ một nhóm có tin: nút lọc vô nghĩa
+    return "".join(inputs) + f'<div class="filters">{"".join(labels)}</div>'
 
 
 def _render(
@@ -487,10 +576,14 @@ def _render(
 
     body.append("<h2>Tin thực tập</h2>")
     if intern_jobs:
-        for cat in CATEGORY_ORDER:
-            icon = CATEGORY_ICONS.get(cat, "")
-            label = CATEGORY_LABELS.get(cat, cat)
-            body.append(_section(f"{icon} {label}", by_cat.get(cat, []), today))
+        sections = "".join(
+            _section(cat, by_cat.get(cat, []), today) for cat in CATEGORY_ORDER
+        )
+        # Bọc chung một khối để radio lọc ở trên chạm được bằng `~ .cats`.
+        body.append(
+            f'<div class="filter-scope">{_filters_html(intern_jobs)}'
+            f'<div class="cats">{sections}</div></div>'
+        )
     else:
         body.append('<p class="empty">Hôm nay không có tin thực tập nào khớp.</p>')
 
@@ -506,12 +599,10 @@ def _render(
             "Telegram vì không phải thực tập, liệt kê ở đây để bạn cân nhắc "
             "thêm.</p>"
         ]
-        for cat in CATEGORY_ORDER:
-            icon = CATEGORY_ICONS.get(cat, "")
-            label = CATEGORY_LABELS.get(cat, cat)
-            inner.append(
-                _section(f"{icon} {label}", fresher_by_cat.get(cat, []), today, "fresher")
-            )
+        inner += [
+            _section(cat, fresher_by_cat.get(cat, []), today, "fresher")
+            for cat in CATEGORY_ORDER
+        ]
         body.append(
             f'<details class="fold"><summary>Fresher / Junior'
             f'<span class="count">{len(fresher_jobs)}</span></summary>'
@@ -531,8 +622,9 @@ def _render(
         body.append('<a class="backlink" href="../index.html">← Về trang mới nhất</a>')
 
     stamp = datetime.now().strftime("%d/%m/%Y %H:%M")
-    heading = f"Việc thực tập IT Hà Nội"
+    heading = "Việc thực tập IT Hà Nội"
     title = f"{heading} – {today.strftime('%d/%m/%Y')}"
+    n_total = len(intern_jobs) + len(fresher_jobs)
 
     return f"""<!DOCTYPE html>
 <html lang="vi">
@@ -546,9 +638,12 @@ def _render(
 </head>
 <body>
 <header class="top"><div class="wrap">
-<h1>{_esc(heading)}</h1>
-<p class="tagline">🛠️ DevOps · ☕ Backend Java · 📊 Data Engineer</p>
-<p class="stamp">Dữ liệu ngày {today.strftime('%d/%m/%Y')} · cập nhật {stamp}</p>
+<span class="eyebrow"><i class="live"></i>Cập nhật hằng ngày 8:00</span>
+<h1>Việc <span class="acc">thực tập IT</span><br>tại Hà Nội</h1>
+<p class="tagline">🛠 DevOps · ☕ Backend Java · 📊 Data Engineer</p>
+<p class="stamp"><span>📅 Dữ liệu ngày {today.strftime('%d/%m/%Y')}</span>
+<span>🔄 Cập nhật {stamp}</span>
+<span>📦 {n_total} tin</span></p>
 </div></header>
 <div class="wrap">
 {"".join(body)}

@@ -67,17 +67,35 @@ def fetch_all_jobs() -> tuple[list, list]:
     return intern, fresher
 
 
-def format_summary(jobs: list, today: date) -> str:
-    """Tạo message tổng hợp theo category."""
+def format_summary(
+    jobs: list,
+    today: date,
+    new_ids: set[str] | None = None,
+    fresher_count: int = 0,
+) -> str:
+    """Tạo message tổng hợp theo category.
+
+    `jobs` là TOÀN BỘ tin thực tập của ngày, không chỉ tin mới — người dùng
+    muốn mỗi bản tin đều nhìn thấy danh sách việc tiềm năng, kể cả hôm đó
+    không có tin nào mới. `new_ids` là tập job_id chưa từng gửi, dùng để gắn
+    nhãn 🆕; để None thì coi tất cả là tin mới.
+    """
     # Nhóm theo category
     by_cat = {}
     for job in jobs:
         by_cat.setdefault(job.category, []).append(job)
 
-    lines = [
-        f"📋 <b>Tin tuyển dụng Intern IT – {today.strftime('%d/%m/%Y')}</b>",
-        f"🔢 Tổng: <b>{len(jobs)} tin</b> | Hà Nội\n",
-    ]
+    new_count = len(jobs) if new_ids is None else sum(
+        1 for j in jobs if j.job_id in new_ids
+    )
+
+    lines = [f"📋 <b>Tin tuyển dụng Intern IT – {today.strftime('%d/%m/%Y')}</b>"]
+    head = f"🔢 <b>{len(jobs)} tin</b> đang mở tại Hà Nội"
+    if new_count:
+        head += f" · <b>{new_count} mới</b>"
+    if fresher_count:
+        head += f"\n➕ {fresher_count} tin fresher (chỉ xem trên web)"
+    lines.append(head + "\n")
 
     # Icon cho từng category
     icons = {"devops": "🛠️", "backend_java": "☕", "data_engineer": "📊"}
@@ -96,15 +114,21 @@ def format_summary(jobs: list, today: date) -> str:
             if job.posted_date:
                 days = (today - job.posted_date).days
                 if days == 0:
-                    age = "🆕 Hôm nay"
+                    age = "Hôm nay"
                 elif days == 1:
-                    age = "📅 Hôm qua"
+                    age = "Hôm qua"
                 else:
-                    age = f"📅 {days} ngày trước"
+                    age = f"{days} ngày trước"
 
+            flag = "🆕 " if (new_ids is None or job.job_id in new_ids) else ""
             title_short = job.title if len(job.title) <= 60 else job.title[:57] + "..."
-            lines.append(f'• <a href="{job.url}"><b>{title_short}</b></a>')
-            lines.append(f"  🏢 {job.company} · {age}")
+            lines.append(f'{flag}• <a href="{job.url}"><b>{title_short}</b></a>')
+            meta = f"  🏢 {job.company}"
+            if age:
+                meta += f" · 📅 {age}"
+            if job.salary:
+                meta += f" · 💰 {job.salary}"
+            lines.append(meta)
 
         lines.append("")  # Dòng trắng giữa các category
 
@@ -186,29 +210,24 @@ async def send_daily(context: ContextTypes.DEFAULT_TYPE) -> None:
         log.info("No subscribers, skipping send")
         return
 
-    if not new_jobs:
-        # Không có tin mới — gửi thông báo ngắn thay vì im lặng.
-        msg = (
-            f"📋 <b>Cập nhật ngày {today.strftime('%d/%m/%Y')}</b>\n\n"
-            "😔 Hôm nay chưa có tin thực tập mới ở Hà Nội.\n"
-            f"Trang thống kê vẫn có {len(fresher_jobs)} tin fresher để tham khảo."
+    # Luôn liệt kê toàn bộ tin thực tập đang mở, tin mới gắn nhãn 🆕. Chỉ khi
+    # không còn tin nào mới gửi thông báo rỗng.
+    if intern_jobs:
+        new_ids = {j.job_id for j in new_jobs}
+        summary = format_summary(
+            intern_jobs, today, new_ids=new_ids, fresher_count=len(fresher_jobs)
         )
-        keyboard = make_site_keyboard(site_url, len(intern_jobs), len(fresher_jobs))
-        for chat_id in subscribers:
-            try:
-                await context.bot.send_message(
-                    chat_id=chat_id, text=msg, parse_mode="HTML",
-                    reply_markup=keyboard,
-                )
-            except Exception as exc:
-                log.warning("Failed to send to %s: %s", chat_id, exc)
-        log.info("=== Daily job completed (no new jobs) ===")
-        return
-
-    summary = format_summary(new_jobs, today)
-    keyboard = make_top_keyboard(
-        new_jobs, site_url=site_url, total=len(intern_jobs), fresher=len(fresher_jobs)
-    )
+        keyboard = make_top_keyboard(
+            intern_jobs, site_url=site_url,
+            total=len(intern_jobs), fresher=len(fresher_jobs),
+        )
+    else:
+        summary = (
+            f"📋 <b>Cập nhật ngày {today.strftime('%d/%m/%Y')}</b>\n\n"
+            "😔 Hôm nay không có tin thực tập nào đang mở ở Hà Nội.\n"
+            f"Trang thống kê có {len(fresher_jobs)} tin fresher để tham khảo."
+        )
+        keyboard = make_site_keyboard(site_url, 0, len(fresher_jobs))
 
     log.info("Sending to %d subscribers", len(subscribers))
     for chat_id in subscribers:
