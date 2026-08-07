@@ -1,355 +1,385 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark light">
-<meta name="description" content="Tin thực tập DevOps, Backend Java, Data Engineer tại Hà Nội, cập nhật hằng ngày.">
-<title>Việc thực tập IT Hà Nội – 07/08/2026</title>
-<style>
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Thực tập IT Hà Nội – 07/08/2026</title><style>
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg: #0b0d12;
-  --bg-2: #0f1218;
-  --panel: rgba(255,255,255,.032);
-  --panel-2: rgba(255,255,255,.055);
-  --line: rgba(255,255,255,.085);
-  --line-2: rgba(255,255,255,.14);
-  --text: #f2f4f9;
-  --text-2: #b9c0d0;
-  --text-3: #7b8496;
-  --brand: #7aa2ff;
-  --intern: #35e0a1;
-  --fresher: #ffb454;
-  --r: 16px;
-  --r-sm: 11px;
-  --shadow: 0 1px 1px rgba(0,0,0,.4), 0 14px 40px -22px rgba(0,0,0,.9);
-  --glow: radial-gradient(120% 100% at 15% 0%, rgba(122,162,255,.16), transparent 60%),
-          radial-gradient(90% 80% at 90% 0%, rgba(53,224,161,.10), transparent 55%);
+  --bg:      #0a0c10;
+  --surface: #111318;
+  --card:    #161a22;
+  --card-h:  #1c2130;
+  --border:  rgba(255,255,255,.07);
+  --border-h:rgba(255,255,255,.13);
+  --text:    #e8eaf2;
+  --text-2:  #9aa0b4;
+  --text-3:  #5c6478;
+  --brand:   #6c8fff;
+  --green:   #22d3a0;
+  --amber:   #ffb347;
+  --red:     #ff6b5b;
+  --r:       14px;
+  --r-sm:    9px;
 }
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #fbfbfd;
-    --bg-2: #f2f4f9;
-    --panel: #ffffff;
-    --panel-2: #f5f7fb;
-    --line: #e6e9f0;
-    --line-2: #d4d9e4;
-    --text: #10131a;
-    --text-2: #444c5e;
-    --text-3: #737c8d;
-    --brand: #2b5fd9;
-    --intern: #08996a;
-    --fresher: #b56a10;
-    --shadow: 0 1px 1px rgba(16,20,30,.04), 0 14px 34px -24px rgba(16,20,30,.4);
-    --glow: radial-gradient(120% 100% at 15% 0%, rgba(43,95,217,.09), transparent 60%),
-            radial-gradient(90% 80% at 90% 0%, rgba(8,153,106,.07), transparent 55%);
+    --bg:      #f4f6fb;
+    --surface: #ffffff;
+    --card:    #ffffff;
+    --card-h:  #f0f3fa;
+    --border:  #dde2ee;
+    --border-h:#bec6db;
+    --text:    #0f1218;
+    --text-2:  #47506a;
+    --text-3:  #8a93aa;
+    --brand:   #2a52cc;
+    --green:   #059669;
+    --amber:   #b45309;
+    --red:     #dc3545;
   }
 }
-* { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body {
-  margin: 0;
-  padding: 0 0 80px;
   background: var(--bg);
   color: var(--text);
-  font: 400 16px/1.62 ui-sans-serif, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font: 400 15px/1.65
+    ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",
+    Roboto,"Helvetica Neue",Arial,sans-serif;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  padding-bottom: 80px;
+  min-height: 100vh;
 }
-.wrap { max-width: 940px; margin: 0 auto; padding: 0 20px; }
-a { color: var(--brand); }
+a { color: var(--brand); text-decoration: none; }
+.wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; }
 
-/* ---------- Header ---------- */
-header.top {
+/* ── Header ───────────────────────────────────────────────── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 40px 0 32px;
+  margin-bottom: 36px;
   position: relative;
   overflow: hidden;
-  background: var(--bg-2);
-  background-image: var(--glow);
-  border-bottom: 1px solid var(--line);
-  padding: 44px 0 34px;
-  margin-bottom: 30px;
 }
-.eyebrow {
-  display: inline-flex; align-items: center; gap: 7px;
-  font-size: 11.5px; font-weight: 700; letter-spacing: .13em;
+header::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 120% at -10% -30%,
+      rgba(108,143,255,.13) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 80% at 110% 110%,
+      rgba(34,211,160,.09) 0%, transparent 50%);
+  pointer-events: none;
+}
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; letter-spacing: .12em;
   text-transform: uppercase; color: var(--text-3);
-  border: 1px solid var(--line); border-radius: 999px;
-  padding: 4px 12px; margin-bottom: 15px;
+  border: 1px solid var(--border);
+  border-radius: 999px; padding: 4px 11px; margin-bottom: 18px;
 }
-.eyebrow .live {
+.badge-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: var(--intern); box-shadow: 0 0 0 3px rgba(53,224,161,.18);
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(34,211,160,.2);
 }
 h1 {
-  font-size: clamp(27px, 6vw, 42px);
-  line-height: 1.1;
-  margin: 0 0 12px;
-  letter-spacing: -.03em;
-  font-weight: 750;
+  font-size: clamp(28px, 6vw, 46px);
+  font-weight: 800; letter-spacing: -.04em; line-height: 1.08;
+  margin-bottom: 10px;
 }
-h1 .acc {
-  background: linear-gradient(96deg, var(--brand), var(--intern));
+.h1-accent {
+  background: linear-gradient(100deg, var(--brand) 0%, var(--green) 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-.tagline { color: var(--text-2); font-size: 15.5px; margin: 0; }
-.stamp {
-  color: var(--text-3); font-size: 13px; margin: 16px 0 0;
-  display: flex; flex-wrap: wrap; gap: 6px 14px;
+.sub { color: var(--text-2); font-size: 15px; margin-bottom: 18px; }
+.meta-row {
+  display: flex; flex-wrap: wrap; gap: 6px 18px;
+  color: var(--text-3); font-size: 12.5px;
 }
 
-/* ---------- Ô số liệu ---------- */
-.grid {
+/* ── Stat grid ─────────────────────────────────────────────── */
+.stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 13px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
 }
 .stat {
-  position: relative;
-  overflow: hidden;
-  background: var(--panel);
-  border: 1px solid var(--line);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--r);
-  box-shadow: var(--shadow);
-  padding: 17px 18px 15px;
+  padding: 18px 20px 16px;
+  position: relative; overflow: hidden;
+  transition: border-color .2s, background .2s;
 }
 .stat::after {
-  content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
-  background: var(--bar, var(--line-2));
+  content: "";
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--accent, var(--border));
+  border-radius: var(--r) var(--r) 0 0;
 }
-.stat .n {
-  font-size: 34px; font-weight: 750; line-height: 1.05;
-  letter-spacing: -.035em; font-variant-numeric: tabular-nums;
-}
-.stat .l {
-  color: var(--text-3); font-size: 11.5px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .08em; margin-top: 5px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.stat.zero .n { color: var(--text-3); }
-
-/* ---------- Chip ---------- */
-.chiprow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
-.chip {
-  display: inline-flex; align-items: center; gap: 7px;
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: 999px; padding: 5px 13px;
-  font-size: 13px; color: var(--text-2);
-}
-.chip b { color: var(--text); font-variant-numeric: tabular-nums; }
-.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
-
-/* ---------- Tiêu đề mục ---------- */
-h2 {
-  display: flex; align-items: baseline; gap: 11px;
-  font-size: 12.5px; font-weight: 750; text-transform: uppercase;
-  letter-spacing: .11em; color: var(--text-3);
-  margin: 44px 0 16px;
-}
-h2::after {
-  content: ""; flex: 1; height: 1px; background: var(--line);
-}
-h3 {
-  display: flex; align-items: center; gap: 9px;
-  font-size: 16px; font-weight: 700; letter-spacing: -.01em;
-  margin: 26px 0 11px;
-}
-h3 .ic {
-  display: grid; place-items: center;
-  width: 26px; height: 26px; flex: none;
-  border-radius: 8px; font-size: 13px;
-  background: var(--panel-2); border: 1px solid var(--line);
-}
-.count {
-  font-size: 11.5px; font-weight: 700; color: var(--text-3);
-  background: var(--panel-2); border: 1px solid var(--line);
-  border-radius: 999px; padding: 2px 9px;
+.stat:hover { border-color: var(--border-h); }
+.stat-val {
+  font-size: 36px; font-weight: 800;
+  letter-spacing: -.05em; line-height: 1;
+  color: var(--c, var(--text));
   font-variant-numeric: tabular-nums;
+  margin-bottom: 6px;
+}
+.stat-label {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: var(--text-3);
 }
 
-/* ---------- Thẻ job ---------- */
-.job {
-  position: relative;
-  display: block;
-  background: var(--panel);
-  border: 1px solid var(--line);
+/* ── Chips ─────────────────────────────────────────────────── */
+.chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 14px 0; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 999px; padding: 4px 12px;
+  font-size: 12.5px; color: var(--text-2);
+}
+.chip strong { color: var(--text); font-variant-numeric: tabular-nums; }
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Section heading ───────────────────────────────────────── */
+.sec-head {
+  display: flex; align-items: center; gap: 10px;
+  margin: 40px 0 18px;
+}
+.sec-head-line {
+  flex: 1; height: 1px; background: var(--border);
+}
+.sec-title {
+  font-size: 11px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .13em;
+  color: var(--text-3); white-space: nowrap;
+}
+
+/* ── Category heading ─────────────────────────────────────── */
+.cat-head {
+  display: flex; align-items: center; gap: 10px;
+  margin: 24px 0 12px;
+}
+.cat-icon {
+  width: 32px; height: 32px; flex-shrink: 0;
+  border-radius: 9px;
+  display: grid; place-items: center;
+  font-size: 15px;
+  background: var(--g, var(--card));
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.cat-name { font-size: 15.5px; font-weight: 700; letter-spacing: -.01em; }
+.badge-count {
+  font-size: 11.5px; font-weight: 700;
+  color: var(--text-3); background: var(--card);
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 2px 9px; font-variant-numeric: tabular-nums;
+}
+
+/* ── Filter tabs ───────────────────────────────────────────── */
+.filter-wrap { margin-bottom: 20px; }
+.filter-tabs { display: flex; flex-wrap: wrap; gap: 7px; }
+.filter-tabs input { position: absolute; opacity: 0; pointer-events: none; }
+.filter-tabs label {
+  cursor: pointer; user-select: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 999px; padding: 6px 14px;
+  font-size: 13px; font-weight: 600; color: var(--text-2);
+  transition: all .15s ease;
+}
+.filter-tabs label:hover { border-color: var(--border-h); color: var(--text); }
+#f-all:checked    ~ .filter-wrap label[for="f-all"],
+#f-devops:checked ~ .filter-wrap label[for="f-devops"],
+#f-java:checked   ~ .filter-wrap label[for="f-java"],
+#f-data:checked   ~ .filter-wrap label[for="f-data"] {
+  background: var(--text); color: var(--bg);
+  border-color: var(--text);
+}
+#f-devops:checked ~ .filter-wrap .cats .cat:not([data-cat="devops"]),
+#f-java:checked   ~ .filter-wrap .cats .cat:not([data-cat="backend_java"]),
+#f-data:checked   ~ .filter-wrap .cats .cat:not([data-cat="data_engineer"])
+  { display: none; }
+
+/* ── Job card ──────────────────────────────────────────────── */
+.job-card {
+  display: block; color: inherit;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--r);
-  box-shadow: var(--shadow);
-  padding: 16px 18px 15px 20px;
-  margin-bottom: 11px;
-  color: inherit;
-  text-decoration: none;
-  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+  padding: 16px 18px 14px;
+  margin-bottom: 9px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .18s, background .18s, transform .18s, box-shadow .18s;
 }
-.job::before {
-  content: ""; position: absolute; left: 0; top: 14px; bottom: 14px;
-  width: 3px; border-radius: 0 3px 3px 0;
-  background: var(--intern);
+.job-card::before {
+  content: "";
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--stripe, var(--green));
+  border-radius: var(--r) 0 0 var(--r);
 }
-.job.fresher::before { background: var(--fresher); }
-.job:hover {
-  border-color: var(--line-2);
-  background: var(--panel-2);
-  transform: translateY(-1px);
+.job-card:hover {
+  border-color: var(--border-h);
+  background: var(--card-h);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(0,0,0,.4);
 }
-.job:hover .title { color: var(--brand); }
-.job .title {
-  font-size: 16.5px; font-weight: 680; line-height: 1.38;
-  letter-spacing: -.012em;
-  transition: color .16s ease;
+.job-card:hover .job-title { color: var(--brand); }
+.job-title {
+  font-size: 15.5px; font-weight: 700;
+  line-height: 1.4; letter-spacing: -.015em;
+  padding-left: 10px;
+  transition: color .18s;
 }
-.job .company {
-  color: var(--text-2); font-size: 14px; margin-top: 4px;
-  display: flex; align-items: center; gap: 7px;
+.job-company {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--text-2); font-size: 13.5px;
+  margin-top: 5px; padding-left: 10px;
 }
-.job .meta {
-  display: flex; flex-wrap: wrap; align-items: center;
-  gap: 6px 7px; margin-top: 11px;
-  font-size: 12.5px; color: var(--text-3);
+.job-meta {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  margin-top: 10px; padding-left: 10px;
 }
 .tag {
-  display: inline-flex; align-items: center; gap: 5px;
-  border-radius: 7px; padding: 3px 9px;
-  background: var(--panel-2); border: 1px solid var(--line);
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; border-radius: 6px;
+  padding: 3px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-3);
   white-space: nowrap;
 }
-.tag.src { font-weight: 650; color: var(--text-2); }
-.tag.hot {
-  color: var(--intern); font-weight: 650;
-  border-color: color-mix(in srgb, var(--intern) 34%, transparent);
-  background: color-mix(in srgb, var(--intern) 11%, transparent);
+.tag.new-tag {
+  color: var(--green); font-weight: 700;
+  border-color: rgba(34,211,160,.25);
+  background: rgba(34,211,160,.08);
 }
-.tag.pay {
-  color: var(--intern); font-weight: 650;
-  border-color: color-mix(in srgb, var(--intern) 26%, transparent);
+.tag.pay-tag {
+  color: var(--amber); font-weight: 600;
+  border-color: rgba(255,179,71,.2);
+  background: rgba(255,179,71,.07);
 }
+.tag.src-tag { font-weight: 600; color: var(--text-2); }
+.job-card.fresher { --stripe: var(--amber); }
 
-/* ---------- Lọc theo nhóm (không JS) ---------- */
-.filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
-.filters input { position: absolute; opacity: 0; pointer-events: none; }
-.filters label {
-  cursor: pointer; user-select: none;
-  display: inline-flex; align-items: center; gap: 7px;
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: 999px; padding: 7px 15px;
-  font-size: 13.5px; font-weight: 600; color: var(--text-2);
-  transition: border-color .15s ease, color .15s ease, background .15s ease;
+/* ── Chart ─────────────────────────────────────────────────── */
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px 20px 14px;
+  margin-bottom: 0;
 }
-.filters label:hover { border-color: var(--line-2); color: var(--text); }
-/* Radio nào đang chọn thì nhãn tương ứng sáng lên. Mọi radio đều nằm
-   trước .filters và .cats trong DOM nên `~` chạm được tới cả hai. */
-#f-all:checked    ~ .filters label[for="f-all"],
-#f-devops:checked ~ .filters label[for="f-devops"],
-#f-java:checked   ~ .filters label[for="f-java"],
-#f-data:checked   ~ .filters label[for="f-data"] {
-  background: var(--text); color: var(--bg); border-color: var(--text);
+.chart-title {
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: var(--text-3); margin-bottom: 16px;
 }
-/* Mặc định ẩn hết, rồi hiện lại nhóm khớp lựa chọn. */
-#f-devops:checked ~ .cats .cat:not([data-cat="devops"]),
-#f-java:checked   ~ .cats .cat:not([data-cat="backend_java"]),
-#f-data:checked   ~ .cats .cat:not([data-cat="data_engineer"]) { display: none; }
-
-/* ---------- Biểu đồ xu hướng ---------- */
-.chart-box {
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: var(--r); box-shadow: var(--shadow);
-  padding: 18px 18px 12px;
+.chart {
+  display: flex; align-items: flex-end;
+  gap: 5px; height: 100px;
 }
-.chart { display: flex; align-items: flex-end; gap: 6px; height: 130px; }
-.chart .col {
-  flex: 1; height: 100%; display: flex; flex-direction: column;
-  justify-content: flex-end; align-items: center; gap: 5px;
+.chart-col {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: flex-end; align-items: center; gap: 4px;
 }
-.chart .v {
-  font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums;
+.chart-val {
+  font-size: 10px; color: var(--text-3);
+  font-variant-numeric: tabular-nums;
 }
-.chart .bar {
-  width: 100%; min-height: 3px; border-radius: 6px 6px 2px 2px;
-  background: linear-gradient(180deg, var(--intern),
-              color-mix(in srgb, var(--intern) 22%, transparent));
+.chart-bar {
+  width: 100%; min-height: 3px;
+  border-radius: 4px 4px 2px 2px;
+  background: var(--green);
+  opacity: .6;
+  transition: opacity .2s;
 }
-.chart .col.zero .bar { background: var(--line); }
-.chart .col.last .bar {
-  background: linear-gradient(180deg, var(--brand),
-              color-mix(in srgb, var(--brand) 22%, transparent));
+.chart-col:hover .chart-bar { opacity: 1; }
+.chart-col.today .chart-bar { background: var(--brand); opacity: 1; }
+.chart-col.zero .chart-bar { background: var(--border); opacity: 1; }
+.chart-x {
+  display: flex; gap: 5px; margin-top: 8px;
 }
-.xaxis { display: flex; gap: 6px; margin-top: 9px; }
-.xaxis div {
-  flex: 1; text-align: center; font-size: 10.5px; color: var(--text-3);
+.chart-x div {
+  flex: 1; text-align: center;
+  font-size: 10px; color: var(--text-3);
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Mục fresher thu gọn ---------- */
-details.fold {
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: var(--r); box-shadow: var(--shadow); padding: 0 18px;
+/* ── Fresher fold ─────────────────────────────────────────── */
+details.fresher-fold {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden;
 }
-details.fold > summary {
-  cursor: pointer; list-style: none;
+details.fresher-fold > summary {
+  list-style: none; cursor: pointer;
   display: flex; align-items: center; gap: 10px;
-  padding: 17px 0; font-size: 15.5px; font-weight: 700;
+  padding: 15px 18px;
+  font-size: 14.5px; font-weight: 700;
+  transition: background .15s;
 }
-details.fold > summary::-webkit-details-marker { display: none; }
-details.fold > summary::before {
-  content: "›"; color: var(--fresher); font-size: 20px; line-height: 1;
-  transition: transform .18s ease;
+details.fresher-fold > summary:hover { background: var(--card-h); }
+details.fresher-fold > summary::-webkit-details-marker { display: none; }
+.fold-arrow {
+  width: 20px; height: 20px;
+  border-radius: 6px;
+  display: grid; place-items: center;
+  font-size: 12px; color: var(--text-3);
+  background: var(--surface); border: 1px solid var(--border);
+  transition: transform .2s ease;
+  flex-shrink: 0;
 }
-details.fold[open] > summary::before { transform: rotate(90deg); }
-details.fold .inner { padding-bottom: 16px; }
-details.fold .note {
-  color: var(--text-3); font-size: 13.5px; margin: 0 0 16px;
-  padding-left: 12px; border-left: 2px solid var(--line-2);
+details.fresher-fold[open] .fold-arrow { transform: rotate(90deg); }
+.fresher-inner { padding: 0 18px 18px; }
+.fresher-note {
+  font-size: 13px; color: var(--text-3);
+  background: var(--surface); border-radius: var(--r-sm);
+  padding: 10px 14px; margin-bottom: 14px;
+  border-left: 3px solid var(--amber);
 }
-details.fold .job { background: var(--panel-2); }
 
-/* ---------- Khác ---------- */
-.empty {
-  color: var(--text-3); font-size: 14.5px; text-align: center;
-  background: var(--panel); border: 1px dashed var(--line-2);
-  border-radius: var(--r); padding: 30px 20px;
-}
-.arch { display: flex; flex-wrap: wrap; gap: 8px; list-style: none;
-        padding: 0; margin: 0; }
-.arch a {
-  display: block; background: var(--panel); border: 1px solid var(--line);
-  border-radius: var(--r-sm); padding: 7px 12px; font-size: 13.5px;
-  color: var(--text-2); text-decoration: none;
+/* ── Archive ───────────────────────────────────────────────── */
+.arch-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+.arch-grid a {
+  display: block;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 6px 12px;
+  font-size: 13px; color: var(--text-2);
   font-variant-numeric: tabular-nums;
+  transition: border-color .15s, color .15s;
 }
-.arch a:hover { border-color: var(--line-2); color: var(--text); }
-.backlink {
+.arch-grid a:hover { border-color: var(--border-h); color: var(--text); }
+
+/* ── Empty state ───────────────────────────────────────────── */
+.empty-state {
+  background: var(--card); border: 1px dashed var(--border-h);
+  border-radius: var(--r); padding: 32px 20px;
+  text-align: center; color: var(--text-3); font-size: 14px;
+}
+
+/* ── Footer / misc ─────────────────────────────────────────── */
+.back-link {
   display: inline-flex; align-items: center; gap: 7px;
-  margin-top: 34px; font-size: 14.5px; text-decoration: none;
+  margin-top: 32px; font-size: 14px; color: var(--text-2);
 }
-.backlink:hover { text-decoration: underline; }
+.back-link:hover { color: var(--text); }
 footer {
-  margin-top: 52px; padding-top: 20px;
-  border-top: 1px solid var(--line);
-  color: var(--text-3); font-size: 13px;
+  margin-top: 56px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--text-3); font-size: 12.5px;
 }
-@media (max-width: 560px) {
-  header.top { padding: 32px 0 26px; }
-  .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .stat .n { font-size: 28px; }
-  .job { padding: 14px 15px 13px 17px; }
+
+/* ── Mobile ────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  header { padding: 28px 0 24px; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .stat-val { font-size: 30px; }
+  .job-title { font-size: 14.5px; }
 }
-</style>
-</head>
-<body>
-<header class="top"><div class="wrap">
-<span class="eyebrow"><i class="live"></i>Cập nhật hằng ngày 8:00</span>
-<h1>Việc <span class="acc">thực tập IT</span><br>tại Hà Nội</h1>
-<p class="tagline">🛠 DevOps · ☕ Backend Java · 📊 Data Engineer</p>
-<p class="stamp"><span>📅 Dữ liệu ngày 07/08/2026</span>
-<span>🔄 Cập nhật 07/08/2026 16:51</span>
-<span>📦 3 tin</span></p>
-</div></header>
-<div class="wrap">
-<div class="grid"><div class="stat" style="--bar:var(--intern)"><div class="n" style="color:var(--intern)">2</div><div class="l">Thực tập</div></div><div class="stat" style="--bar:var(--brand)"><div class="n" style="color:var(--brand)">1</div><div class="l">Đăng hôm nay</div></div><div class="stat" style="--bar:var(--fresher)"><div class="n" style="color:var(--fresher)">1</div><div class="l">Fresher</div></div><div class="stat"><div class="n">2</div><div class="l">Nguồn có tin</div></div></div><div class="chiprow"><span class="chip">🛠 DevOps <b>1</b></span><span class="chip">☕ Backend Java <b>0</b></span><span class="chip">📊 Data Engineer <b>1</b></span><span class="chip"><i class="dot" style="background:#2ecfa4"></i>Glints <b>1</b></span><span class="chip"><i class="dot" style="background:#57a5f0"></i>VietnamWorks <b>1</b></span></div><h2>Tin thực tập</h2><div class="filter-scope"><input type="radio" name="cat" id="f-all" checked><input type="radio" name="cat" id="f-devops"><input type="radio" name="cat" id="f-data"><div class="filters"><label for="f-all">Tất cả <span class="count">2</span></label><label for="f-devops">🛠 DevOps<span class="count">1</span></label><label for="f-data">📊 Data Engineer<span class="count">1</span></label></div><div class="cats"><div class="cat" data-cat="devops"><h3><span class="ic">🛠</span>DevOps<span class="count">1</span></h3><a class="job" href="https://glints.com/vn/opportunities/jobs/embedded-intern/b0ba486e-1687-4b93-815a-f49945e96cd8" target="_blank" rel="noopener"><div class="title">Embedded Intern</div><div class="company"><i class="dot" style="background:#2ecfa4"></i>Panasonic R&amp;D Center Việt Nam</div><div class="meta"><span class="tag hot">✦ hôm nay</span><span class="tag">📍 Quận Ba Đình, Hà Nội, Vietnam</span><span class="tag pay">💰 6,500,000 - 6,580,000 VND/tháng</span><span class="tag src"><i class="dot" style="background:#2ecfa4"></i>Glints</span></div></a></div><div class="cat" data-cat="data_engineer"><h3><span class="ic">📊</span>Data Engineer<span class="count">1</span></h3><a class="job" href="https://www.vietnamworks.com/thuc-tap-sinh-phan-tich-du-lieu-and-nghien-cuu-san-pham-2070664-jv" target="_blank" rel="noopener"><div class="title">Thực Tập Sinh Phân Tích Dữ Liệu &amp; Nghiên Cứu Sản Phẩm</div><div class="company"><i class="dot" style="background:#57a5f0"></i>Công Ty Cổ Phần Chứng Khoán SSI</div><div class="meta"><span class="tag hot">✦ hôm qua</span><span class="tag">📍 Hà Nội</span><span class="tag src"><i class="dot" style="background:#57a5f0"></i>VietnamWorks</span></div></a></div></div></div><h2>Tham khảo thêm</h2><details class="fold"><summary>Fresher / Junior<span class="count">1</span></summary><div class="inner"><p class="note">Các tin fresher / junior này KHÔNG được gửi qua Telegram vì không phải thực tập, liệt kê ở đây để bạn cân nhắc thêm.</p><div class="cat" data-cat="data_engineer"><h3><span class="ic">📊</span>Data Engineer<span class="count">1</span></h3><a class="job fresher" href="https://glints.com/vn/opportunities/jobs/business-intelligence-fresher-full-time/283e7f3c-94e6-42af-b621-f308404a6896" target="_blank" rel="noopener"><div class="title">BUSINESS INTELLIGENCE FRESHER (Full-time)</div><div class="company"><i class="dot" style="background:#2ecfa4"></i>AdFlex</div><div class="meta"><span class="tag">🕒 3 ngày trước</span><span class="tag">📍 Quận Nam Từ Liêm, Hà Nội, Vietnam</span><span class="tag pay">💰 8,000,000 - 12,000,000 VND/tháng</span><span class="tag src"><i class="dot" style="background:#2ecfa4"></i>Glints</span></div></a></div></div></details>
-<footer>
-Sinh tự động bởi bot tuyển dụng · nguồn: ITviec, VietnamWorks, Glints, LinkedIn.
-</footer>
-</div>
-</body>
-</html>
+</style></head><body><header><div class="wrap"><div class="badge"><span class="badge-dot"></span>Cập nhật hàng ngày</div><h1>Tin thực tập <span class="h1-accent">IT Hà Nội</span></h1><p class="sub">DevOps · Backend Java · Data Engineer — tổng hợp hàng ngày</p><div class="meta-row"><span>📅 07/08/2026</span><span>🔢 2 tin intern</span><span>🆕 2 tin mới</span></div></div></header><main class="wrap"><div class="stats"><div class="stat" style="--c:var(--text);--accent:var(--green)"><div class="stat-val">2</div><div class="stat-label">Tin thực tập</div></div><div class="stat" style="--c:var(--green);--accent:var(--green)"><div class="stat-val">2</div><div class="stat-label">Đăng hôm nay</div></div><div class="stat" style="--c:var(--amber);--accent:var(--amber)"><div class="stat-val">1</div><div class="stat-label">Fresher</div></div><div class="stat" style="--c:var(--brand);--accent:var(--brand)"><div class="stat-val">2</div><div class="stat-label">Nguồn có tin</div></div></div><div class="chips"><span class="chip"><span class="dot" style="background:#f97316"></span>🛠 DevOps <strong>1</strong></span><span class="chip"><span class="dot" style="background:#8b5cf6"></span>☕ Backend Java <strong>0</strong></span><span class="chip"><span class="dot" style="background:#06b6d4"></span>📊 Data Engineer <strong>1</strong></span></div><div class="sec-head"><div class="sec-head-line"></div><div class="sec-title">📈 Xu hướng</div><div class="sec-head-line"></div></div><div class="chart-card"><div class="chart-title">📈 Xu hướng 14 ngày</div><div class="chart" style="height:100px"><div class="chart-col zero"><div class="chart-val"></div><div class="chart-bar" style="height:3%"></div></div><div class="chart-col zero"><div class="chart-val"></div><div class="chart-bar" style="height:3%"></div></div><div class="chart-col zero"><div class="chart-val"></div><div class="chart-bar" style="height:3%"></div></div><div class="chart-col zero"><div class="chart-val"></div><div class="chart-bar" style="height:3%"></div></div><div class="chart-col zero"><div class="chart-val"></div><div class="chart-bar" style="height:3%"></div></div><div class="chart-col zero"><div class="chart-val"></div><div class="chart-bar" style="height:3%"></div></div><div class="chart-col zero"><div class="chart-val"></div><div class="chart-bar" style="height:3%"></div></div><div class="chart-col zero"><div class="chart-val"></div><div class="chart-bar" style="height:3%"></div></div><div class="chart-col zero"><div class="chart-val"></div><div class="chart-bar" style="height:3%"></div></div><div class="chart-col zero"><div class="chart-val"></div><div class="chart-bar" style="height:3%"></div></div><div class="chart-col zero"><div class="chart-val"></div><div class="chart-bar" style="height:3%"></div></div><div class="chart-col zero"><div class="chart-val"></div><div class="chart-bar" style="height:3%"></div></div><div class="chart-col zero"><div class="chart-val"></div><div class="chart-bar" style="height:3%"></div></div><div class="chart-col today"><div class="chart-val">2</div><div class="chart-bar" style="height:100%"></div></div></div><div class="chart-x"><div>25</div><div></div><div></div><div>28</div><div></div><div></div><div>31</div><div></div><div></div><div>3</div><div></div><div></div><div>6</div><div>7</div></div></div><div class="sec-head"><div class="sec-head-line"></div><div class="sec-title">💼 Danh sách tin</div><div class="sec-head-line"></div></div><input type="radio" name="fcat" id="f-all" checked><input type="radio" name="fcat" id="f-devops"><input type="radio" name="fcat" id="f-java"><input type="radio" name="fcat" id="f-data"><div class="filter-wrap"><div class="filter-tabs"><label for="f-all">Tất cả <strong>2</strong></label><label for="f-devops">🛠 DevOps <strong>1</strong></label><label for="f-java">☕ Java <strong>0</strong></label><label for="f-data">📊 Data <strong>1</strong></label></div><div class="cats"><div class="cat" data-cat="devops"><div class="cat-head"><div class="cat-icon" style="background:linear-gradient(135deg,#f97316,#ea580c)">🛠</div><span class="cat-name">DevOps</span><span class="badge-count">1 tin</span></div><a class="job-card" href="https://glints.com/vn/opportunities/jobs/embedded-intern/b0ba486e-1687-4b93-815a-f49945e96cd8" target="_blank" rel="noopener" style="--stripe:#00c896"><div class="job-title">Embedded Intern</div><div class="job-company"><span>Panasonic R&amp;D Center Việt Nam</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Quận Ba Đình, Hà Nội, Vietnam</span></div><div class="job-meta"><span class="tag new-tag">🆕 Mới</span><span class="tag pay-tag">💰 6,500,000 - 6,580,000 VND/tháng</span><span class="tag src-tag" style="color:#00c896">Glints</span><span class="tag">🕐 Hôm nay</span><span class="tag">Java</span><span class="tag">Linux OS</span><span class="tag">CI/CD</span><span class="tag">Python</span><span class="tag">full time</span></div></a></div><div class="cat" data-cat="backend_java"><div class="cat-head"><div class="cat-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)">☕</div><span class="cat-name">Backend Java</span><span class="badge-count">0 tin</span></div><div class="empty-state">Chưa có tin nào hôm nay.</div></div><div class="cat" data-cat="data_engineer"><div class="cat-head"><div class="cat-icon" style="background:linear-gradient(135deg,#06b6d4,#0891b2)">📊</div><span class="cat-name">Data Engineer</span><span class="badge-count">1 tin</span></div><a class="job-card" href="https://www.vietnamworks.com/thuc-tap-sinh-phan-tich-du-lieu-and-nghien-cuu-san-pham-2070664-jv" target="_blank" rel="noopener" style="--stripe:#3b9eff"><div class="job-title">Thực Tập Sinh Phân Tích Dữ Liệu &amp; Nghiên Cứu Sản Phẩm</div><div class="job-company"><span>Công Ty Cổ Phần Chứng Khoán SSI</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Hà Nội</span></div><div class="job-meta"><span class="tag new-tag">🆕 Mới</span><span class="tag src-tag" style="color:#3b9eff">VietnamWorks</span><span class="tag">🕐 Hôm qua</span><span class="tag">Information Systems</span><span class="tag">Financial Products</span><span class="tag">Securities</span><span class="tag">excel</span><span class="tag">Data analysis</span></div></a></div></div></div><div class="sec-head"><div class="sec-head-line"></div><div class="sec-title">🌱 Fresher</div><div class="sec-head-line"></div></div><details class="fresher-fold"><summary><span class="fold-arrow">▶</span>🌱 Fresher (1 tin) — Không yêu cầu kinh nghiệm</summary><div class="fresher-inner"><p class="fresher-note">Các tin này yêu cầu 0 năm kinh nghiệm hoặc ghi rõ "fresher welcome".</p><a class="job-card fresher" href="https://glints.com/vn/opportunities/jobs/business-intelligence-fresher-full-time/283e7f3c-94e6-42af-b621-f308404a6896" target="_blank" rel="noopener" style="--stripe:#00c896"><div class="job-title">BUSINESS INTELLIGENCE FRESHER (Full-time)</div><div class="job-company"><span>AdFlex</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Quận Nam Từ Liêm, Hà Nội, Vietnam</span></div><div class="job-meta"><span class="tag pay-tag">💰 8,000,000 - 12,000,000 VND/tháng</span><span class="tag src-tag" style="color:#00c896">Glints</span><span class="tag">🕐 3 ngày trước</span><span class="tag">Data Visualization</span><span class="tag">Data Analysis</span><span class="tag">Python</span><span class="tag">Tableau</span><span class="tag">Microsoft Excel</span></div></a></div></details><div class="sec-head"><div class="sec-line sec-head-line"></div><div class="sec-title">📂 Lưu trữ</div><div class="sec-head-line"></div></div><div class="arch-grid"><a href="archive/2026-08-07.html">2026-08-07</a></div><footer>Dữ liệu tổng hợp tự động từ ITviec, VietnamWorks, Glints, LinkedIn.</footer></main></body></html>

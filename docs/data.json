@@ -1,15 +1,6 @@
-{
-  "2026-08-07": {
-    "intern": 2,
-    "fresher": 1,
-    "by_cat": {
-      "devops": 1,
-      "backend_java": 0,
-      "data_engineer": 1
-    },
-    "by_source": {
-      "Glints": 1,
-      "VietnamWorks": 1
-    }
+[
+  {
+    "date": "2026-08-07",
+    "count": 2
   }
-}
+]
