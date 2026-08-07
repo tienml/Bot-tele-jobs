@@ -63,6 +63,26 @@ GLINTS_QUERIES = [
 ]
 GLINTS_PAGES = 3
 
+# --- Nguồn LinkedIn ------------------------------------------------------
+# Dùng endpoint "jobs-guest" — LinkedIn dành riêng cho khách chưa đăng nhập,
+# trả HTML danh sách job nên không cần token và không vướng authwall.
+# Mỗi lần trả 10 tin, phân trang bằng tham số `start` (0, 10, 20...).
+#
+# Quan trọng: LinkedIn tự nới lỏng truy vấn nhiều từ. Query "devops intern"
+# bị hiểu thành "devops" nên trả về toàn tin Senior/Middle — 110 tin lấy về
+# mà không tin nào là thực tập. Ngược lại query "intern" thuần cho tỉ lệ
+# đúng cấp bậc rất cao (66/75 tin là thực tập thật).
+# Vì vậy: chỉ hỏi LinkedIn theo CẤP BẬC, còn lọc NGÀNH để filters.py làm.
+LINKEDIN_QUERIES = [
+    "intern",
+    "internship",
+    "thực tập",
+    "thực tập sinh",
+]
+LINKEDIN_LOCATION = "Hanoi, Hanoi, Vietnam"
+LINKEDIN_PAGES = 10         # 10 x 10 = 100 tin mỗi truy vấn
+LINKEDIN_TPR = "r2592000"   # chỉ tin đăng trong 30 ngày gần nhất
+
 # cityId = 24 là Hà Nội (xác minh qua facet API).
 HANOI_CITY_ID = 24
 
