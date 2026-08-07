@@ -32,703 +32,830 @@ log = logging.getLogger(__name__)
 CATEGORY_ORDER = ["devops", "backend_java", "data_engineer"]
 CATEGORY_ICONS = {"devops": "🛠", "backend_java": "☕", "data_engineer": "📊"}
 
-# Màu nhận dạng từng nguồn, giúp mắt phân biệt nhanh khi cuộn danh sách dài.
 SOURCE_COLORS = {
-    "ITviec": "#f2705f",
-    "VietnamWorks": "#57a5f0",
-    "Glints": "#2ecfa4",
-    "LinkedIn": "#7c8cff",
+    "ITviec":       "#ff6b5b",
+    "VietnamWorks": "#3b9eff",
+    "Glints":       "#00c896",
+    "LinkedIn":     "#7b8bff",
+}
+
+# Gradient nền cho từng nhóm nghề — dùng trong icon box
+CAT_GRADIENTS = {
+    "devops":       "linear-gradient(135deg,#f97316,#ea580c)",
+    "backend_java": "linear-gradient(135deg,#8b5cf6,#7c3aed)",
+    "data_engineer":"linear-gradient(135deg,#06b6d4,#0891b2)",
 }
 
 _CSS = """
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg: #0b0d12;
-  --bg-2: #0f1218;
-  --panel: rgba(255,255,255,.032);
-  --panel-2: rgba(255,255,255,.055);
-  --line: rgba(255,255,255,.085);
-  --line-2: rgba(255,255,255,.14);
-  --text: #f2f4f9;
-  --text-2: #b9c0d0;
-  --text-3: #7b8496;
-  --brand: #7aa2ff;
-  --intern: #35e0a1;
-  --fresher: #ffb454;
-  --r: 16px;
-  --r-sm: 11px;
-  --shadow: 0 1px 1px rgba(0,0,0,.4), 0 14px 40px -22px rgba(0,0,0,.9);
-  --glow: radial-gradient(120% 100% at 15% 0%, rgba(122,162,255,.16), transparent 60%),
-          radial-gradient(90% 80% at 90% 0%, rgba(53,224,161,.10), transparent 55%);
+  --bg:      #0a0c10;
+  --surface: #111318;
+  --card:    #161a22;
+  --card-h:  #1c2130;
+  --border:  rgba(255,255,255,.07);
+  --border-h:rgba(255,255,255,.13);
+  --text:    #e8eaf2;
+  --text-2:  #9aa0b4;
+  --text-3:  #5c6478;
+  --brand:   #6c8fff;
+  --green:   #22d3a0;
+  --amber:   #ffb347;
+  --red:     #ff6b5b;
+  --r:       14px;
+  --r-sm:    9px;
 }
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #fbfbfd;
-    --bg-2: #f2f4f9;
-    --panel: #ffffff;
-    --panel-2: #f5f7fb;
-    --line: #e6e9f0;
-    --line-2: #d4d9e4;
-    --text: #10131a;
-    --text-2: #444c5e;
-    --text-3: #737c8d;
-    --brand: #2b5fd9;
-    --intern: #08996a;
-    --fresher: #b56a10;
-    --shadow: 0 1px 1px rgba(16,20,30,.04), 0 14px 34px -24px rgba(16,20,30,.4);
-    --glow: radial-gradient(120% 100% at 15% 0%, rgba(43,95,217,.09), transparent 60%),
-            radial-gradient(90% 80% at 90% 0%, rgba(8,153,106,.07), transparent 55%);
+    --bg:      #f4f6fb;
+    --surface: #ffffff;
+    --card:    #ffffff;
+    --card-h:  #f0f3fa;
+    --border:  #dde2ee;
+    --border-h:#bec6db;
+    --text:    #0f1218;
+    --text-2:  #47506a;
+    --text-3:  #8a93aa;
+    --brand:   #2a52cc;
+    --green:   #059669;
+    --amber:   #b45309;
+    --red:     #dc3545;
   }
 }
-* { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body {
-  margin: 0;
-  padding: 0 0 80px;
   background: var(--bg);
   color: var(--text);
-  font: 400 16px/1.62 ui-sans-serif, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font: 400 15px/1.65
+    ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",
+    Roboto,"Helvetica Neue",Arial,sans-serif;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  padding-bottom: 80px;
+  min-height: 100vh;
 }
-.wrap { max-width: 940px; margin: 0 auto; padding: 0 20px; }
-a { color: var(--brand); }
+a { color: var(--brand); text-decoration: none; }
+.wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; }
 
-/* ---------- Header ---------- */
-header.top {
+/* ── Header ───────────────────────────────────────────────── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 40px 0 32px;
+  margin-bottom: 36px;
   position: relative;
   overflow: hidden;
-  background: var(--bg-2);
-  background-image: var(--glow);
-  border-bottom: 1px solid var(--line);
-  padding: 44px 0 34px;
-  margin-bottom: 30px;
 }
-.eyebrow {
-  display: inline-flex; align-items: center; gap: 7px;
-  font-size: 11.5px; font-weight: 700; letter-spacing: .13em;
+header::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 120% at -10% -30%,
+      rgba(108,143,255,.13) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 80% at 110% 110%,
+      rgba(34,211,160,.09) 0%, transparent 50%);
+  pointer-events: none;
+}
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; letter-spacing: .12em;
   text-transform: uppercase; color: var(--text-3);
-  border: 1px solid var(--line); border-radius: 999px;
-  padding: 4px 12px; margin-bottom: 15px;
+  border: 1px solid var(--border);
+  border-radius: 999px; padding: 4px 11px; margin-bottom: 18px;
 }
-.eyebrow .live {
+.badge-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: var(--intern); box-shadow: 0 0 0 3px rgba(53,224,161,.18);
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(34,211,160,.2);
 }
 h1 {
-  font-size: clamp(27px, 6vw, 42px);
-  line-height: 1.1;
-  margin: 0 0 12px;
-  letter-spacing: -.03em;
-  font-weight: 750;
+  font-size: clamp(28px, 6vw, 46px);
+  font-weight: 800; letter-spacing: -.04em; line-height: 1.08;
+  margin-bottom: 10px;
 }
-h1 .acc {
-  background: linear-gradient(96deg, var(--brand), var(--intern));
+.h1-accent {
+  background: linear-gradient(100deg, var(--brand) 0%, var(--green) 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-.tagline { color: var(--text-2); font-size: 15.5px; margin: 0; }
-.stamp {
-  color: var(--text-3); font-size: 13px; margin: 16px 0 0;
-  display: flex; flex-wrap: wrap; gap: 6px 14px;
+.sub { color: var(--text-2); font-size: 15px; margin-bottom: 18px; }
+.meta-row {
+  display: flex; flex-wrap: wrap; gap: 6px 18px;
+  color: var(--text-3); font-size: 12.5px;
 }
 
-/* ---------- Ô số liệu ---------- */
-.grid {
+/* ── Stat grid ─────────────────────────────────────────────── */
+.stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 13px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
 }
 .stat {
-  position: relative;
-  overflow: hidden;
-  background: var(--panel);
-  border: 1px solid var(--line);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--r);
-  box-shadow: var(--shadow);
-  padding: 17px 18px 15px;
+  padding: 18px 20px 16px;
+  position: relative; overflow: hidden;
+  transition: border-color .2s, background .2s;
 }
 .stat::after {
-  content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
-  background: var(--bar, var(--line-2));
+  content: "";
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--accent, var(--border));
+  border-radius: var(--r) var(--r) 0 0;
 }
-.stat .n {
-  font-size: 34px; font-weight: 750; line-height: 1.05;
-  letter-spacing: -.035em; font-variant-numeric: tabular-nums;
-}
-.stat .l {
-  color: var(--text-3); font-size: 11.5px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .08em; margin-top: 5px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.stat.zero .n { color: var(--text-3); }
-
-/* ---------- Chip ---------- */
-.chiprow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
-.chip {
-  display: inline-flex; align-items: center; gap: 7px;
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: 999px; padding: 5px 13px;
-  font-size: 13px; color: var(--text-2);
-}
-.chip b { color: var(--text); font-variant-numeric: tabular-nums; }
-.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
-
-/* ---------- Tiêu đề mục ---------- */
-h2 {
-  display: flex; align-items: baseline; gap: 11px;
-  font-size: 12.5px; font-weight: 750; text-transform: uppercase;
-  letter-spacing: .11em; color: var(--text-3);
-  margin: 44px 0 16px;
-}
-h2::after {
-  content: ""; flex: 1; height: 1px; background: var(--line);
-}
-h3 {
-  display: flex; align-items: center; gap: 9px;
-  font-size: 16px; font-weight: 700; letter-spacing: -.01em;
-  margin: 26px 0 11px;
-}
-h3 .ic {
-  display: grid; place-items: center;
-  width: 26px; height: 26px; flex: none;
-  border-radius: 8px; font-size: 13px;
-  background: var(--panel-2); border: 1px solid var(--line);
-}
-.count {
-  font-size: 11.5px; font-weight: 700; color: var(--text-3);
-  background: var(--panel-2); border: 1px solid var(--line);
-  border-radius: 999px; padding: 2px 9px;
+.stat:hover { border-color: var(--border-h); }
+.stat-val {
+  font-size: 36px; font-weight: 800;
+  letter-spacing: -.05em; line-height: 1;
+  color: var(--c, var(--text));
   font-variant-numeric: tabular-nums;
+  margin-bottom: 6px;
+}
+.stat-label {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: var(--text-3);
 }
 
-/* ---------- Thẻ job ---------- */
-.job {
-  position: relative;
-  display: block;
-  background: var(--panel);
-  border: 1px solid var(--line);
+/* ── Chips ─────────────────────────────────────────────────── */
+.chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 14px 0; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 999px; padding: 4px 12px;
+  font-size: 12.5px; color: var(--text-2);
+}
+.chip strong { color: var(--text); font-variant-numeric: tabular-nums; }
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Section heading ───────────────────────────────────────── */
+.sec-head {
+  display: flex; align-items: center; gap: 10px;
+  margin: 40px 0 18px;
+}
+.sec-head-line {
+  flex: 1; height: 1px; background: var(--border);
+}
+.sec-title {
+  font-size: 11px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .13em;
+  color: var(--text-3); white-space: nowrap;
+}
+
+/* ── Category heading ─────────────────────────────────────── */
+.cat-head {
+  display: flex; align-items: center; gap: 10px;
+  margin: 24px 0 12px;
+}
+.cat-icon {
+  width: 32px; height: 32px; flex-shrink: 0;
+  border-radius: 9px;
+  display: grid; place-items: center;
+  font-size: 15px;
+  background: var(--g, var(--card));
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.cat-name { font-size: 15.5px; font-weight: 700; letter-spacing: -.01em; }
+.badge-count {
+  font-size: 11.5px; font-weight: 700;
+  color: var(--text-3); background: var(--card);
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 2px 9px; font-variant-numeric: tabular-nums;
+}
+
+/* ── Filter tabs ───────────────────────────────────────────── */
+.filter-wrap { margin-bottom: 20px; }
+.filter-tabs { display: flex; flex-wrap: wrap; gap: 7px; }
+.filter-tabs input { position: absolute; opacity: 0; pointer-events: none; }
+.filter-tabs label {
+  cursor: pointer; user-select: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 999px; padding: 6px 14px;
+  font-size: 13px; font-weight: 600; color: var(--text-2);
+  transition: all .15s ease;
+}
+.filter-tabs label:hover { border-color: var(--border-h); color: var(--text); }
+#f-all:checked    ~ .filter-wrap label[for="f-all"],
+#f-devops:checked ~ .filter-wrap label[for="f-devops"],
+#f-java:checked   ~ .filter-wrap label[for="f-java"],
+#f-data:checked   ~ .filter-wrap label[for="f-data"] {
+  background: var(--text); color: var(--bg);
+  border-color: var(--text);
+}
+#f-devops:checked ~ .filter-wrap .cats .cat:not([data-cat="devops"]),
+#f-java:checked   ~ .filter-wrap .cats .cat:not([data-cat="backend_java"]),
+#f-data:checked   ~ .filter-wrap .cats .cat:not([data-cat="data_engineer"])
+  { display: none; }
+
+/* ── Job card ──────────────────────────────────────────────── */
+.job-card {
+  display: block; color: inherit;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--r);
-  box-shadow: var(--shadow);
-  padding: 16px 18px 15px 20px;
-  margin-bottom: 11px;
-  color: inherit;
-  text-decoration: none;
-  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+  padding: 16px 18px 14px;
+  margin-bottom: 9px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .18s, background .18s, transform .18s, box-shadow .18s;
 }
-.job::before {
-  content: ""; position: absolute; left: 0; top: 14px; bottom: 14px;
-  width: 3px; border-radius: 0 3px 3px 0;
-  background: var(--intern);
+.job-card::before {
+  content: "";
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--stripe, var(--green));
+  border-radius: var(--r) 0 0 var(--r);
 }
-.job.fresher::before { background: var(--fresher); }
-.job:hover {
-  border-color: var(--line-2);
-  background: var(--panel-2);
-  transform: translateY(-1px);
+.job-card:hover {
+  border-color: var(--border-h);
+  background: var(--card-h);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(0,0,0,.4);
 }
-.job:hover .title { color: var(--brand); }
-.job .title {
-  font-size: 16.5px; font-weight: 680; line-height: 1.38;
-  letter-spacing: -.012em;
-  transition: color .16s ease;
+.job-card:hover .job-title { color: var(--brand); }
+.job-title {
+  font-size: 15.5px; font-weight: 700;
+  line-height: 1.4; letter-spacing: -.015em;
+  padding-left: 10px;
+  transition: color .18s;
 }
-.job .company {
-  color: var(--text-2); font-size: 14px; margin-top: 4px;
-  display: flex; align-items: center; gap: 7px;
+.job-company {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--text-2); font-size: 13.5px;
+  margin-top: 5px; padding-left: 10px;
 }
-.job .meta {
-  display: flex; flex-wrap: wrap; align-items: center;
-  gap: 6px 7px; margin-top: 11px;
-  font-size: 12.5px; color: var(--text-3);
+.job-meta {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  margin-top: 10px; padding-left: 10px;
 }
 .tag {
-  display: inline-flex; align-items: center; gap: 5px;
-  border-radius: 7px; padding: 3px 9px;
-  background: var(--panel-2); border: 1px solid var(--line);
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; border-radius: 6px;
+  padding: 3px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-3);
   white-space: nowrap;
 }
-.tag.src { font-weight: 650; color: var(--text-2); }
-.tag.hot {
-  color: var(--intern); font-weight: 650;
-  border-color: color-mix(in srgb, var(--intern) 34%, transparent);
-  background: color-mix(in srgb, var(--intern) 11%, transparent);
+.tag.new-tag {
+  color: var(--green); font-weight: 700;
+  border-color: rgba(34,211,160,.25);
+  background: rgba(34,211,160,.08);
 }
-.tag.pay {
-  color: var(--intern); font-weight: 650;
-  border-color: color-mix(in srgb, var(--intern) 26%, transparent);
+.tag.pay-tag {
+  color: var(--amber); font-weight: 600;
+  border-color: rgba(255,179,71,.2);
+  background: rgba(255,179,71,.07);
 }
+.tag.src-tag { font-weight: 600; color: var(--text-2); }
+.job-card.fresher { --stripe: var(--amber); }
 
-/* ---------- Lọc theo nhóm (không JS) ---------- */
-.filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
-.filters input { position: absolute; opacity: 0; pointer-events: none; }
-.filters label {
-  cursor: pointer; user-select: none;
-  display: inline-flex; align-items: center; gap: 7px;
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: 999px; padding: 7px 15px;
-  font-size: 13.5px; font-weight: 600; color: var(--text-2);
-  transition: border-color .15s ease, color .15s ease, background .15s ease;
+/* ── Chart ─────────────────────────────────────────────────── */
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px 20px 14px;
+  margin-bottom: 0;
 }
-.filters label:hover { border-color: var(--line-2); color: var(--text); }
-/* Radio nào đang chọn thì nhãn tương ứng sáng lên. Mọi radio đều nằm
-   trước .filters và .cats trong DOM nên `~` chạm được tới cả hai. */
-#f-all:checked    ~ .filters label[for="f-all"],
-#f-devops:checked ~ .filters label[for="f-devops"],
-#f-java:checked   ~ .filters label[for="f-java"],
-#f-data:checked   ~ .filters label[for="f-data"] {
-  background: var(--text); color: var(--bg); border-color: var(--text);
+.chart-title {
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: var(--text-3); margin-bottom: 16px;
 }
-/* Mặc định ẩn hết, rồi hiện lại nhóm khớp lựa chọn. */
-#f-devops:checked ~ .cats .cat:not([data-cat="devops"]),
-#f-java:checked   ~ .cats .cat:not([data-cat="backend_java"]),
-#f-data:checked   ~ .cats .cat:not([data-cat="data_engineer"]) { display: none; }
-
-/* ---------- Biểu đồ xu hướng ---------- */
-.chart-box {
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: var(--r); box-shadow: var(--shadow);
-  padding: 18px 18px 12px;
+.chart {
+  display: flex; align-items: flex-end;
+  gap: 5px; height: 100px;
 }
-.chart { display: flex; align-items: flex-end; gap: 6px; height: 130px; }
-.chart .col {
-  flex: 1; height: 100%; display: flex; flex-direction: column;
-  justify-content: flex-end; align-items: center; gap: 5px;
+.chart-col {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: flex-end; align-items: center; gap: 4px;
 }
-.chart .v {
-  font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums;
+.chart-val {
+  font-size: 10px; color: var(--text-3);
+  font-variant-numeric: tabular-nums;
 }
-.chart .bar {
-  width: 100%; min-height: 3px; border-radius: 6px 6px 2px 2px;
-  background: linear-gradient(180deg, var(--intern),
-              color-mix(in srgb, var(--intern) 22%, transparent));
+.chart-bar {
+  width: 100%; min-height: 3px;
+  border-radius: 4px 4px 2px 2px;
+  background: var(--green);
+  opacity: .6;
+  transition: opacity .2s;
 }
-.chart .col.zero .bar { background: var(--line); }
-.chart .col.last .bar {
-  background: linear-gradient(180deg, var(--brand),
-              color-mix(in srgb, var(--brand) 22%, transparent));
+.chart-col:hover .chart-bar { opacity: 1; }
+.chart-col.today .chart-bar { background: var(--brand); opacity: 1; }
+.chart-col.zero .chart-bar { background: var(--border); opacity: 1; }
+.chart-x {
+  display: flex; gap: 5px; margin-top: 8px;
 }
-.xaxis { display: flex; gap: 6px; margin-top: 9px; }
-.xaxis div {
-  flex: 1; text-align: center; font-size: 10.5px; color: var(--text-3);
+.chart-x div {
+  flex: 1; text-align: center;
+  font-size: 10px; color: var(--text-3);
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Mục fresher thu gọn ---------- */
-details.fold {
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: var(--r); box-shadow: var(--shadow); padding: 0 18px;
+/* ── Fresher fold ─────────────────────────────────────────── */
+details.fresher-fold {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden;
 }
-details.fold > summary {
-  cursor: pointer; list-style: none;
+details.fresher-fold > summary {
+  list-style: none; cursor: pointer;
   display: flex; align-items: center; gap: 10px;
-  padding: 17px 0; font-size: 15.5px; font-weight: 700;
+  padding: 15px 18px;
+  font-size: 14.5px; font-weight: 700;
+  transition: background .15s;
 }
-details.fold > summary::-webkit-details-marker { display: none; }
-details.fold > summary::before {
-  content: "›"; color: var(--fresher); font-size: 20px; line-height: 1;
-  transition: transform .18s ease;
+details.fresher-fold > summary:hover { background: var(--card-h); }
+details.fresher-fold > summary::-webkit-details-marker { display: none; }
+.fold-arrow {
+  width: 20px; height: 20px;
+  border-radius: 6px;
+  display: grid; place-items: center;
+  font-size: 12px; color: var(--text-3);
+  background: var(--surface); border: 1px solid var(--border);
+  transition: transform .2s ease;
+  flex-shrink: 0;
 }
-details.fold[open] > summary::before { transform: rotate(90deg); }
-details.fold .inner { padding-bottom: 16px; }
-details.fold .note {
-  color: var(--text-3); font-size: 13.5px; margin: 0 0 16px;
-  padding-left: 12px; border-left: 2px solid var(--line-2);
+details.fresher-fold[open] .fold-arrow { transform: rotate(90deg); }
+.fresher-inner { padding: 0 18px 18px; }
+.fresher-note {
+  font-size: 13px; color: var(--text-3);
+  background: var(--surface); border-radius: var(--r-sm);
+  padding: 10px 14px; margin-bottom: 14px;
+  border-left: 3px solid var(--amber);
 }
-details.fold .job { background: var(--panel-2); }
 
-/* ---------- Khác ---------- */
-.empty {
-  color: var(--text-3); font-size: 14.5px; text-align: center;
-  background: var(--panel); border: 1px dashed var(--line-2);
-  border-radius: var(--r); padding: 30px 20px;
-}
-.arch { display: flex; flex-wrap: wrap; gap: 8px; list-style: none;
-        padding: 0; margin: 0; }
-.arch a {
-  display: block; background: var(--panel); border: 1px solid var(--line);
-  border-radius: var(--r-sm); padding: 7px 12px; font-size: 13.5px;
-  color: var(--text-2); text-decoration: none;
+/* ── Archive ───────────────────────────────────────────────── */
+.arch-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+.arch-grid a {
+  display: block;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 6px 12px;
+  font-size: 13px; color: var(--text-2);
   font-variant-numeric: tabular-nums;
+  transition: border-color .15s, color .15s;
 }
-.arch a:hover { border-color: var(--line-2); color: var(--text); }
-.backlink {
+.arch-grid a:hover { border-color: var(--border-h); color: var(--text); }
+
+/* ── Empty state ───────────────────────────────────────────── */
+.empty-state {
+  background: var(--card); border: 1px dashed var(--border-h);
+  border-radius: var(--r); padding: 32px 20px;
+  text-align: center; color: var(--text-3); font-size: 14px;
+}
+
+/* ── Footer / misc ─────────────────────────────────────────── */
+.back-link {
   display: inline-flex; align-items: center; gap: 7px;
-  margin-top: 34px; font-size: 14.5px; text-decoration: none;
+  margin-top: 32px; font-size: 14px; color: var(--text-2);
 }
-.backlink:hover { text-decoration: underline; }
+.back-link:hover { color: var(--text); }
 footer {
-  margin-top: 52px; padding-top: 20px;
-  border-top: 1px solid var(--line);
-  color: var(--text-3); font-size: 13px;
+  margin-top: 56px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--text-3); font-size: 12.5px;
 }
-@media (max-width: 560px) {
-  header.top { padding: 32px 0 26px; }
-  .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .stat .n { font-size: 28px; }
-  .job { padding: 14px 15px 13px 17px; }
+
+/* ── Mobile ────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  header { padding: 28px 0 24px; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .stat-val { font-size: 30px; }
+  .job-title { font-size: 14.5px; }
 }
 """
 
+# ── Hàm tiện ích ────────────────────────────────────────────────────────────
 
 def _esc(text: str) -> str:
-    return html.escape(text or "", quote=True)
+    """Escape HTML entities."""
+    return html.escape(str(text or ""), quote=True)
 
 
-def _age_label(job, today: date) -> str:
-    """Nhãn độ mới của tin, dựa vào ngày đăng."""
-    if not job.posted_date:
-        return job.posted_text or ""
-    days = (today - job.posted_date).days
-    if days <= 0:
-        return "hôm nay"
-    if days == 1:
-        return "hôm qua"
-    return f"{days} ngày trước"
+def _age_label(posted: date | None, today: date) -> str:
+    """Trả về nhãn thời gian dạng '2 ngày trước', 'Hôm nay'…"""
+    if posted is None:
+        return ""
+    delta = (today - posted).days
+    if delta == 0:
+        return "Hôm nay"
+    if delta == 1:
+        return "Hôm qua"
+    if delta < 7:
+        return f"{delta} ngày trước"
+    if delta < 14:
+        return "1 tuần trước"
+    if delta < 21:
+        return "2 tuần trước"
+    return f"{delta // 7} tuần trước"
 
 
 def _source_color(source: str) -> str:
-    return SOURCE_COLORS.get(source, "#8b93a7")
+    return SOURCE_COLORS.get(source, "#9aa0b4")
 
 
-def _job_html(job, today: date, css_class: str = "") -> str:
-    """Một thẻ job. Cả thẻ là một link để bấm ở đâu cũng mở được tin."""
-    tags: list[str] = []
+# ── Card từng job ────────────────────────────────────────────────────────────
 
-    age = _age_label(job, today)
-    if age:
-        is_new = job.posted_date is not None and (today - job.posted_date).days <= 1
-        tags.append(
-            f'<span class="tag{" hot" if is_new else ""}">{"✦" if is_new else "🕒"} '
-            f"{_esc(age)}</span>"
-        )
-    if job.location:
-        tags.append(f'<span class="tag">📍 {_esc(job.location)}</span>')
+def _job_html(job, today: date, is_new: bool = False, is_fresher: bool = False) -> str:
+    age = _age_label(job.posted_date, today)
+    color = _source_color(job.source)
+    fresher_cls = " fresher" if is_fresher else ""
+
+    tags_html = ""
+    if is_new:
+        tags_html += '<span class="tag new-tag">🆕 Mới</span>'
     if job.salary:
-        tags.append(f'<span class="tag pay">💰 {_esc(job.salary)}</span>')
-    tags.append(
-        f'<span class="tag src">'
-        f'<i class="dot" style="background:{_source_color(job.source)}"></i>'
-        f"{_esc(job.source)}</span>"
-    )
+        tags_html += f'<span class="tag pay-tag">💰 {_esc(job.salary)}</span>'
+    tags_html += f'<span class="tag src-tag" style="color:{color}">{_esc(job.source)}</span>'
+    if age:
+        tags_html += f'<span class="tag">🕐 {_esc(age)}</span>'
+    for t in (job.tags or [])[:5]:
+        tags_html += f'<span class="tag">{_esc(t)}</span>'
 
-    company = ""
-    if job.company:
-        company = (
-            f'<div class="company">'
-            f'<i class="dot" style="background:{_source_color(job.source)}"></i>'
-            f"{_esc(job.company)}</div>"
-        )
-    klass = f"job {css_class}".strip()
     return (
-        f'<a class="{klass}" href="{_esc(job.url)}"'
-        f' target="_blank" rel="noopener">'
-        f'<div class="title">{_esc(job.title)}</div>'
-        f"{company}"
-        f'<div class="meta">{"".join(tags)}</div>'
-        f"</a>"
+        f'<a class="job-card{fresher_cls}" href="{_esc(job.url)}" target="_blank" rel="noopener"'
+        f' style="--stripe:{color}">'
+        f'<div class="job-title">{_esc(job.title)}</div>'
+        f'<div class="job-company">'
+        f'<span>{_esc(job.company)}</span>'
+        + (f'<span class="text-3" style="color:var(--text-3)">·</span>'
+           f'<span style="color:var(--text-3);font-size:12.5px">{_esc(job.location)}</span>'
+           if job.location else '')
+        + f'</div>'
+        f'<div class="job-meta">{tags_html}</div>'
+        f'</a>'
     )
 
 
-def _section(cat: str, jobs: list, today: date, css_class: str = "") -> str:
-    """Một nhóm nghề có tiêu đề. Trả về chuỗi rỗng nếu nhóm trống.
+# ── Section theo nhóm nghề ───────────────────────────────────────────────────
 
-    `data-cat` để bộ lọc CSS ẩn/hiện được nhóm mà không cần JavaScript.
-    """
-    if not jobs:
-        return ""
-    icon = CATEGORY_ICONS.get(cat, "•")
+def _section(cat: str, jobs: list, today: date, new_ids: set[str] | None) -> str:
     label = CATEGORY_LABELS.get(cat, cat)
-    cards = "".join(_job_html(j, today, css_class) for j in jobs)
+    icon = CATEGORY_ICONS.get(cat, "💼")
+    gradient = CAT_GRADIENTS.get(cat, "var(--card)")
+
+    cards = "".join(
+        _job_html(j, today, is_new=(new_ids is None or j.job_id in new_ids))
+        for j in jobs
+    )
+    if not cards:
+        cards = '<div class="empty-state">Chưa có tin nào hôm nay.</div>'
+
     return (
         f'<div class="cat" data-cat="{_esc(cat)}">'
-        f'<h3><span class="ic">{icon}</span>{_esc(label)}'
-        f'<span class="count">{len(jobs)}</span></h3>'
-        f"{cards}</div>"
+        f'<div class="cat-head">'
+        f'<div class="cat-icon" style="background:{gradient}">{icon}</div>'
+        f'<span class="cat-name">{_esc(label)}</span>'
+        f'<span class="badge-count">{len(jobs)} tin</span>'
+        f'</div>'
+        f'{cards}'
+        f'</div>'
     )
 
 
-def _stats_html(intern_jobs: list, fresher_jobs: list, today: date) -> str:
-    """Bốn ô số liệu chính + hàng chip chi tiết theo nhóm và theo nguồn.
+# ── Stat grid ────────────────────────────────────────────────────────────────
 
-    Nhãn trong ô luôn ngắn gọn (một dòng) để các ô cùng chiều cao; phần chi
-    tiết dài như danh sách nguồn được đẩy xuống hàng chip bên dưới.
-    """
-    fresh_today = sum(
-        1 for j in intern_jobs
-        if j.posted_date is not None and (today - j.posted_date).days <= 0
-    )
-    by_source: dict[str, int] = {}
-    for job in intern_jobs:
-        by_source[job.source] = by_source.get(job.source, 0) + 1
-
-    def cell(value: int, label: str, color: str = "") -> str:
-        style = f' style="color:{color}"' if color and value else ""
-        bar = f' style="--bar:{color}"' if color and value else ""
-        zero = " zero" if not value else ""
+def _stats_html(
+    total: int,
+    new_count: int,
+    fresher_count: int,
+    sources_active: int,
+    by_cat: dict[str, int],
+) -> str:
+    def stat(val: int, label: str, color: str, accent: str) -> str:
         return (
-            f'<div class="stat{zero}"{bar}><div class="n"{style}>{value}</div>'
-            f'<div class="l">{label}</div></div>'
+            f'<div class="stat" style="--c:{color};--accent:{accent}">'
+            f'<div class="stat-val">{val}</div>'
+            f'<div class="stat-label">{label}</div>'
+            f'</div>'
         )
 
-    cells = [
-        cell(len(intern_jobs), "Thực tập", "var(--intern)"),
-        cell(fresh_today, "Đăng hôm nay", "var(--brand)"),
-        cell(len(fresher_jobs), "Fresher", "var(--fresher)"),
-        cell(len(by_source), "Nguồn có tin"),
-    ]
+    grid = (
+        stat(total,         "Tin thực tập",   "var(--text)",  "var(--green)")
+        + stat(new_count,   "Đăng hôm nay",   "var(--green)", "var(--green)")
+        + stat(fresher_count,"Fresher",        "var(--amber)", "var(--amber)")
+        + stat(sources_active,"Nguồn có tin",  "var(--brand)", "var(--brand)")
+    )
 
-    chips = []
+    chips = ""
     for cat in CATEGORY_ORDER:
-        n = sum(1 for j in intern_jobs if j.category == cat)
         label = CATEGORY_LABELS.get(cat, cat)
-        chips.append(
-            f'<span class="chip">{CATEGORY_ICONS.get(cat, "")} '
-            f"{_esc(label)} <b>{n}</b></span>"
-        )
-    for src, n in sorted(by_source.items(), key=lambda kv: (-kv[1], kv[0])):
-        chips.append(
-            f'<span class="chip"><i class="dot" style="background:'
-            f'{_source_color(src)}"></i>{_esc(src)} <b>{n}</b></span>'
+        icon  = CATEGORY_ICONS.get(cat, "")
+        count = by_cat.get(cat, 0)
+        color = {
+            "devops":       "#f97316",
+            "backend_java": "#8b5cf6",
+            "data_engineer":"#06b6d4",
+        }.get(cat, "#9aa0b4")
+        chips += (
+            f'<span class="chip">'
+            f'<span class="dot" style="background:{color}"></span>'
+            f'{icon} {_esc(label)} <strong>{count}</strong>'
+            f'</span>'
         )
 
+    return f'<div class="stats">{grid}</div><div class="chips">{chips}</div>'
+
+
+# ── Biểu đồ xu hướng 14 ngày ─────────────────────────────────────────────────
+
+def _trend_html(history: list[dict], today_count: int, today: date) -> str:
+    """history: danh sách {date, count} từ data.json, đã sắp xếp tăng dần."""
+    # Lấy 14 ngày gần nhất (bao gồm hôm nay)
+    hist_map: dict[str, int] = {r["date"]: r["count"] for r in history}
+    from datetime import timedelta
+    days = [(today - timedelta(days=13 - i)) for i in range(14)]
+    counts = [
+        today_count if d == today else hist_map.get(str(d), 0)
+        for d in days
+    ]
+    max_c = max(counts) if counts else 1
+    max_c = max_c or 1  # tránh chia 0
+
+    bars = ""
+    labels = ""
+    for i, (d, c) in enumerate(zip(days, counts)):
+        pct = round(c / max_c * 100)
+        is_today = "today" if d == today else ("zero" if c == 0 else "")
+        bars += (
+            f'<div class="chart-col {is_today}">'
+            f'<div class="chart-val">{c if c else ""}</div>'
+            f'<div class="chart-bar" style="height:{max(pct,3)}%"></div>'
+            f'</div>'
+        )
+        # Hiển thị nhãn ngày mỗi 3 cột hoặc hôm nay
+        lbl = str(d.day) if (i % 3 == 0 or d == today) else ""
+        labels += f'<div>{lbl}</div>'
+
     return (
-        f'<div class="grid">{"".join(cells)}</div>'
-        f'<div class="chiprow">{"".join(chips)}</div>'
+        f'<div class="chart-card">'
+        f'<div class="chart-title">📈 Xu hướng 14 ngày</div>'
+        f'<div class="chart" style="height:100px">{bars}</div>'
+        f'<div class="chart-x">{labels}</div>'
+        f'</div>'
     )
 
 
-def _trend_html(history: dict) -> str:
-    """Biểu đồ cột số tin thực tập theo ngày (14 ngày gần nhất)."""
-    days = sorted(history.keys())[-14:]
-    if len(days) < 2:
-        return ""
+# ── Filter tabs (CSS-only, không JS) ─────────────────────────────────────────
 
-    values = [history[d].get("intern", 0) for d in days]
-    peak = max(values) or 1
-    cols = []
-    for i, v in enumerate(values):
-        klass = "col"
-        if not v:
-            klass += " zero"
-        if i == len(values) - 1:
-            klass += " last"
-        cols.append(
-            f'<div class="{klass}"><span class="v">{v}</span>'
-            f'<div class="bar" style="height:{max(3, round(v / peak * 100))}%"></div>'
-            f"</div>"
-        )
-    labels = "".join(f"<div>{d[8:10]}/{d[5:7]}</div>" for d in days)
-    return (
-        f"<h2>Xu hướng {len(days)} ngày</h2>"
-        f'<div class="chart-box"><div class="chart">{"".join(cols)}</div>'
-        f'<div class="xaxis">{labels}</div></div>'
+def _filters_html(by_cat: dict[str, int]) -> str:
+    total = sum(by_cat.values())
+    tabs = (
+        f'<input type="radio" name="fcat" id="f-all" checked>'
+        f'<input type="radio" name="fcat" id="f-devops">'
+        f'<input type="radio" name="fcat" id="f-java">'
+        f'<input type="radio" name="fcat" id="f-data">'
+        f'<div class="filter-wrap">'
+        f'<div class="filter-tabs">'
+        f'<label for="f-all">Tất cả <strong>{total}</strong></label>'
+        f'<label for="f-devops">🛠 DevOps <strong>{by_cat.get("devops",0)}</strong></label>'
+        f'<label for="f-java">☕ Java <strong>{by_cat.get("backend_java",0)}</strong></label>'
+        f'<label for="f-data">📊 Data <strong>{by_cat.get("data_engineer",0)}</strong></label>'
+        f'</div>'
     )
+    return tabs
 
 
-def _filters_html(intern_jobs: list) -> str:
-    """Nút lọc theo nhóm nghề, làm bằng radio ẩn + CSS (không cần JS).
-
-    Các radio phải nằm TRƯỚC .filters và .cats trong DOM để selector
-    `:checked ~` chạm được tới chúng.
-    """
-    counts = {
-        cat: sum(1 for j in intern_jobs if j.category == cat)
-        for cat in CATEGORY_ORDER
-    }
-    ids = {"devops": "f-devops", "backend_java": "f-java", "data_engineer": "f-data"}
-
-    inputs = ['<input type="radio" name="cat" id="f-all" checked>']
-    labels = [f'<label for="f-all">Tất cả <span class="count">'
-              f'{len(intern_jobs)}</span></label>']
-    for cat in CATEGORY_ORDER:
-        if not counts[cat]:
-            continue  # nhóm trống thì không cần nút lọc
-        fid = ids[cat]
-        inputs.append(f'<input type="radio" name="cat" id="{fid}">')
-        labels.append(
-            f'<label for="{fid}">{CATEGORY_ICONS.get(cat, "")} '
-            f'{_esc(CATEGORY_LABELS.get(cat, cat))}'
-            f'<span class="count">{counts[cat]}</span></label>'
-        )
-    if len(labels) < 3:
-        return ""  # chỉ một nhóm có tin: nút lọc vô nghĩa
-    return "".join(inputs) + f'<div class="filters">{"".join(labels)}</div>'
-
+# ── Render trang chính ────────────────────────────────────────────────────────
 
 def _render(
-    today: date,
-    intern_jobs: list,
+    jobs: list,
     fresher_jobs: list,
-    history: dict,
-    archive_days: list[str],
-    is_index: bool,
+    today: date,
+    new_ids: set[str] | None,
+    history: list[dict],
+    archives: list[str],
+    is_archive: bool = False,
+    site_url: str = "",
 ) -> str:
-    """Dựng HTML hoàn chỉnh cho một trang."""
-    by_cat: dict[str, list] = {}
-    for job in intern_jobs:
-        by_cat.setdefault(job.category, []).append(job)
+    by_cat: dict[str, int] = {}
+    for j in jobs:
+        by_cat[j.category] = by_cat.get(j.category, 0) + 1
 
-    body = [_stats_html(intern_jobs, fresher_jobs, today)]
+    active_sources = len({j.source for j in jobs})
+    new_count = len(jobs) if new_ids is None else sum(
+        1 for j in jobs if j.job_id in new_ids
+    )
 
-    if is_index:
-        body.append(_trend_html(history))
+    today_str = today.strftime("%d/%m/%Y")
+    today_iso = str(today)
 
-    body.append("<h2>Tin thực tập</h2>")
-    if intern_jobs:
-        sections = "".join(
-            _section(cat, by_cat.get(cat, []), today) for cat in CATEGORY_ORDER
-        )
-        # Bọc chung một khối để radio lọc ở trên chạm được bằng `~ .cats`.
-        body.append(
-            f'<div class="filter-scope">{_filters_html(intern_jobs)}'
-            f'<div class="cats">{sections}</div></div>'
-        )
+    # ── Header
+    if is_archive:
+        header_title = f'<span class="h1-accent">{today_str}</span>'
+        sub_text = "Lưu trữ tin thực tập"
     else:
-        body.append('<p class="empty">Hôm nay không có tin thực tập nào khớp.</p>')
+        header_title = 'Tin thực tập <span class="h1-accent">IT Hà Nội</span>'
+        sub_text = "DevOps · Backend Java · Data Engineer — tổng hợp hàng ngày"
 
-    # Fresher gấp lại mặc định: đây là nhóm tham khảo, không nên chiếm chỗ
-    # của nhóm chính khi cuộn trang.
-    body.append("<h2>Tham khảo thêm</h2>")
+    back_btn = ""
+    if is_archive and site_url:
+        back_btn = f'<a class="back-link" href="{_esc(site_url)}">← Trang chính</a>'
+
+    header_html = (
+        f'<header>'
+        f'<div class="wrap">'
+        f'<div class="badge"><span class="badge-dot"></span>Cập nhật hàng ngày</div>'
+        f'<h1>{header_title}</h1>'
+        f'<p class="sub">{sub_text}</p>'
+        f'<div class="meta-row">'
+        f'<span>📅 {today_str}</span>'
+        f'<span>🔢 {len(jobs)} tin intern</span>'
+        + (f'<span>🆕 {new_count} tin mới</span>' if new_count and not is_archive else '')
+        + f'</div>'
+        f'{back_btn}'
+        f'</div>'
+        f'</header>'
+    )
+
+    # ── Stats
+    stats_html = _stats_html(len(jobs), new_count, len(fresher_jobs), active_sources, by_cat)
+
+    # ── Trend chart (chỉ trang chính)
+    trend_html = ""
+    if not is_archive:
+        trend_html = _trend_html(history, len(jobs), today)
+
+    # ── Sections section heading + filter
+    filter_html = _filters_html(by_cat)
+
+    cats_html = ""
+    for cat in CATEGORY_ORDER:
+        cat_jobs = [j for j in jobs if j.category == cat]
+        cats_html += _section(cat, cat_jobs, today, new_ids)
+
+    # Đóng filter wrapper
+    sections_block = (
+        f'{filter_html}'
+        f'<div class="cats">'
+        f'{cats_html}'
+        f'</div>'
+        f'</div>'  # đóng .filter-wrap
+    )
+
+    # ── Fresher fold
+    fresher_html = ""
     if fresher_jobs:
-        fresher_by_cat: dict[str, list] = {}
-        for job in fresher_jobs:
-            fresher_by_cat.setdefault(job.category, []).append(job)
-        inner = [
-            '<p class="note">Các tin fresher / junior này KHÔNG được gửi qua '
-            "Telegram vì không phải thực tập, liệt kê ở đây để bạn cân nhắc "
-            "thêm.</p>"
-        ]
-        inner += [
-            _section(cat, fresher_by_cat.get(cat, []), today, "fresher")
-            for cat in CATEGORY_ORDER
-        ]
-        body.append(
-            f'<details class="fold"><summary>Fresher / Junior'
-            f'<span class="count">{len(fresher_jobs)}</span></summary>'
-            f'<div class="inner">{"".join(inner)}</div></details>'
+        f_cards = "".join(_job_html(j, today, is_fresher=True) for j in fresher_jobs)
+        fresher_html = (
+            f'<details class="fresher-fold">'
+            f'<summary>'
+            f'<span class="fold-arrow">▶</span>'
+            f'🌱 Fresher ({len(fresher_jobs)} tin) — Không yêu cầu kinh nghiệm'
+            f'</summary>'
+            f'<div class="fresher-inner">'
+            f'<p class="fresher-note">'
+            f'Các tin này yêu cầu 0 năm kinh nghiệm hoặc ghi rõ "fresher welcome".'
+            f'</p>'
+            f'{f_cards}'
+            f'</div>'
+            f'</details>'
         )
-    else:
-        body.append('<p class="empty">Không có tin fresher/junior nào.</p>')
 
-    if is_index and len(archive_days) > 1:
+    # ── Archive links (chỉ trang chính)
+    archive_html = ""
+    if archives and not is_archive:
         links = "".join(
-            f'<li><a href="archive/{d}.html">{d[8:10]}/{d[5:7]}</a></li>'
-            for d in reversed(archive_days)
+            f'<a href="archive/{_esc(a)}.html">{_esc(a)}</a>'
+            for a in sorted(archives, reverse=True)[:30]
         )
-        body.append(f'<h2>Lưu trữ theo ngày</h2><ul class="arch">{links}</ul>')
+        archive_html = (
+            f'<div class="sec-head">'
+            f'<div class="sec-line sec-head-line"></div>'
+            f'<div class="sec-title">📂 Lưu trữ</div>'
+            f'<div class="sec-head-line"></div>'
+            f'</div>'
+            f'<div class="arch-grid">{links}</div>'
+        )
 
-    if not is_index:
-        body.append('<a class="backlink" href="../index.html">← Về trang mới nhất</a>')
+    body = (
+        f'{header_html}'
+        f'<main class="wrap">'
+        f'{stats_html}'
+        + (f'<div class="sec-head"><div class="sec-head-line"></div>'
+           f'<div class="sec-title">📈 Xu hướng</div>'
+           f'<div class="sec-head-line"></div></div>{trend_html}' if trend_html else '')
+        + f'<div class="sec-head">'
+        f'<div class="sec-head-line"></div>'
+        f'<div class="sec-title">💼 Danh sách tin</div>'
+        f'<div class="sec-head-line"></div>'
+        f'</div>'
+        f'{sections_block}'
+        + (f'<div class="sec-head">'
+           f'<div class="sec-head-line"></div>'
+           f'<div class="sec-title">🌱 Fresher</div>'
+           f'<div class="sec-head-line"></div>'
+           f'</div>{fresher_html}' if fresher_html else '')
+        + f'{archive_html}'
+        f'<footer>Dữ liệu tổng hợp tự động từ ITviec, VietnamWorks, Glints, LinkedIn.</footer>'
+        f'</main>'
+    )
 
-    stamp = datetime.now().strftime("%d/%m/%Y %H:%M")
-    heading = "Việc thực tập IT Hà Nội"
-    title = f"{heading} – {today.strftime('%d/%m/%Y')}"
-    n_total = len(intern_jobs) + len(fresher_jobs)
-
-    return f"""<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="dark light">
-<meta name="description" content="Tin thực tập DevOps, Backend Java, Data Engineer tại Hà Nội, cập nhật hằng ngày.">
-<title>{_esc(title)}</title>
-<style>{_CSS}</style>
-</head>
-<body>
-<header class="top"><div class="wrap">
-<span class="eyebrow"><i class="live"></i>Cập nhật hằng ngày 8:00</span>
-<h1>Việc <span class="acc">thực tập IT</span><br>tại Hà Nội</h1>
-<p class="tagline">🛠 DevOps · ☕ Backend Java · 📊 Data Engineer</p>
-<p class="stamp"><span>📅 Dữ liệu ngày {today.strftime('%d/%m/%Y')}</span>
-<span>🔄 Cập nhật {stamp}</span>
-<span>📦 {n_total} tin</span></p>
-</div></header>
-<div class="wrap">
-{"".join(body)}
-<footer>
-Sinh tự động bởi bot tuyển dụng · nguồn: ITviec, VietnamWorks, Glints, LinkedIn.
-</footer>
-</div>
-</body>
-</html>
-"""
+    return (
+        f'<!doctype html>'
+        f'<html lang="vi">'
+        f'<head>'
+        f'<meta charset="utf-8">'
+        f'<meta name="viewport" content="width=device-width,initial-scale=1">'
+        f'<title>Thực tập IT Hà Nội – {today_str}</title>'
+        f'<style>{_CSS}</style>'
+        f'</head>'
+        f'<body>{body}</body>'
+        f'</html>'
+    )
 
 
-def _load_history() -> dict:
-    """Đọc số liệu tích luỹ; trả về dict rỗng nếu chưa có hoặc file hỏng."""
-    path = SITE_DIR / "data.json"
-    if not path.exists():
-        return {}
+# ── Lịch sử & lưu trữ ────────────────────────────────────────────────────────
+
+def _load_history(data_file: "Path") -> list[dict]:
+    """Đọc data.json → list[{date, count}], tạo file rỗng nếu chưa có."""
+    if not data_file.exists():
+        return []
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-        return data if isinstance(data, dict) else {}
-    except (json.JSONDecodeError, OSError) as exc:
-        log.warning("data.json không đọc được (%s), tạo lại từ đầu.", exc)
-        return {}
+        with data_file.open(encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else []
+    except Exception:
+        log.warning("data.json lỗi, khởi tạo lại.")
+        return []
 
 
-def _prune_archive(keep_days: int) -> None:
-    """Xoá bản lưu quá cũ để repo không phình mãi."""
-    arch_dir = SITE_DIR / "archive"
-    if not arch_dir.exists():
-        return
-    files = sorted(arch_dir.glob("*.html"))
-    for old in files[:-keep_days] if len(files) > keep_days else []:
+def _prune_archive(archive_dir: "Path", keep: int) -> list[str]:
+    """Giữ lại `keep` bản archive gần nhất, xoá cũ hơn. Trả danh sách ngày còn lại."""
+    pages = sorted(archive_dir.glob("????-??-??.html"))
+    for old in pages[:-keep] if keep < len(pages) else []:
         old.unlink(missing_ok=True)
-        log.info("Đã xoá bản lưu cũ %s", old.name)
+        log.info("Xoá archive cũ: %s", old.name)
+    remaining = sorted(archive_dir.glob("????-??-??.html"))
+    return [p.stem for p in remaining]
 
 
-def build(intern_jobs: list, fresher_jobs: list, today: date) -> str:
-    """Sinh toàn bộ trang tĩnh, trả về URL công khai của trang.
+# ── Entry point ───────────────────────────────────────────────────────────────
 
-    URL luôn cố định (PAGES_URL) nên nút trong Telegram không đổi. Trang chỉ
-    thực sự cập nhật sau khi `docs/` được commit lên repo — GitHub Actions
-    làm việc đó ở bước cuối của workflow.
+def build(
+    jobs: list,
+    fresher_jobs: list,
+    today: date,
+    new_ids: set[str] | None = None,
+    site_url: str = "",
+) -> str:
+    """Sinh toàn bộ trang web, trả về URL trang chính.
+
+    Tạo / cập nhật:
+      docs/index.html
+      docs/archive/{today}.html
+      docs/data.json
+      docs/.nojekyll
     """
-    SITE_DIR.mkdir(parents=True, exist_ok=True)
-    (SITE_DIR / "archive").mkdir(exist_ok=True)
-    # GitHub Pages mặc định chạy Jekyll và bỏ qua file/thư mục bắt đầu bằng "_".
-    (SITE_DIR / ".nojekyll").write_text("", encoding="utf-8")
+    from pathlib import Path
 
-    key = today.isoformat()
-    history = _load_history()
-    history[key] = {
-        "intern": len(intern_jobs),
-        "fresher": len(fresher_jobs),
-        "by_cat": {
-            cat: sum(1 for j in intern_jobs if j.category == cat)
-            for cat in CATEGORY_ORDER
-        },
-        "by_source": {
-            src: sum(1 for j in intern_jobs if j.source == src)
-            for src in sorted({j.source for j in intern_jobs})
-        },
-    }
-    # Giữ số liệu gọn, cùng khoảng thời gian với bản lưu HTML.
-    for stale in sorted(history.keys())[:-ARCHIVE_KEEP_DAYS]:
-        history.pop(stale, None)
+    out_dir = Path(SITE_DIR)
+    archive_dir = out_dir / "archive"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    archive_dir.mkdir(exist_ok=True)
 
-    _prune_archive(ARCHIVE_KEEP_DAYS)
-    archive_days = sorted(p.stem for p in (SITE_DIR / "archive").glob("*.html"))
-    if key not in archive_days:
-        archive_days.append(key)
+    # Tắt Jekyll
+    nojekyll = out_dir / ".nojekyll"
+    if not nojekyll.exists():
+        nojekyll.touch()
 
-    (SITE_DIR / "archive" / f"{key}.html").write_text(
-        _render(today, intern_jobs, fresher_jobs, history, archive_days, is_index=False),
-        encoding="utf-8",
-    )
-    (SITE_DIR / "index.html").write_text(
-        _render(today, intern_jobs, fresher_jobs, history, archive_days, is_index=True),
-        encoding="utf-8",
-    )
-    (SITE_DIR / "data.json").write_text(
-        json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    # Tải lịch sử
+    data_file = out_dir / "data.json"
+    history = _load_history(data_file)
 
-    log.info(
-        "Đã sinh trang tĩnh: %d tin thực tập, %d tin fresher -> %s",
-        len(intern_jobs), len(fresher_jobs), PAGES_URL,
+    # Cập nhật / thêm bản ghi hôm nay
+    today_iso = str(today)
+    hist_map = {r["date"]: r for r in history}
+    hist_map[today_iso] = {"date": today_iso, "count": len(jobs)}
+    history = sorted(hist_map.values(), key=lambda r: r["date"])
+
+    with data_file.open("w", encoding="utf-8") as f:
+        json.dump(history, f, ensure_ascii=False, indent=2)
+
+    # Lấy danh sách archive sau khi prune
+    archives = _prune_archive(archive_dir, ARCHIVE_KEEP_DAYS)
+
+    # Render trang chính
+    index_html = _render(
+        jobs, fresher_jobs, today, new_ids, history, archives,
+        is_archive=False, site_url=site_url,
     )
-    return PAGES_URL
+    (out_dir / "index.html").write_text(index_html, encoding="utf-8")
+    log.info("Đã ghi docs/index.html (%d jobs)", len(jobs))
+
+    # Render trang lưu trữ ngày hôm nay
+    archive_html = _render(
+        jobs, fresher_jobs, today, new_ids, history, archives,
+        is_archive=True, site_url=site_url,
+    )
+    (archive_dir / f"{today_iso}.html").write_text(archive_html, encoding="utf-8")
+    log.info("Đã ghi docs/archive/%s.html", today_iso)
+
+    return site_url or str(out_dir / "index.html")
