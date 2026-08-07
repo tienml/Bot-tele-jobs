@@ -50,37 +50,37 @@ _CSS = """
 /* ── Reset & base ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg:      #0a0c10;
-  --surface: #111318;
-  --card:    #161a22;
-  --card-h:  #1c2130;
-  --border:  rgba(255,255,255,.07);
-  --border-h:rgba(255,255,255,.13);
-  --text:    #e8eaf2;
-  --text-2:  #9aa0b4;
-  --text-3:  #5c6478;
-  --brand:   #6c8fff;
-  --green:   #22d3a0;
-  --amber:   #ffb347;
-  --red:     #ff6b5b;
+  --bg:      #f0f4f8;
+  --surface: #ffffff;
+  --card:    #ffffff;
+  --card-h:  #f7f9fc;
+  --border:  #e2e8f0;
+  --border-h:#c7d2e0;
+  --text:    #0f172a;
+  --text-2:  #475569;
+  --text-3:  #94a3b8;
+  --brand:   #2563eb;
+  --green:   #10b981;
+  --amber:   #f59e0b;
+  --red:     #ef4444;
   --r:       14px;
   --r-sm:    9px;
 }
-@media (prefers-color-scheme: light) {
+@media (prefers-color-scheme: dark) {
   :root {
-    --bg:      #f4f6fb;
-    --surface: #ffffff;
-    --card:    #ffffff;
-    --card-h:  #f0f3fa;
-    --border:  #dde2ee;
-    --border-h:#bec6db;
-    --text:    #0f1218;
-    --text-2:  #47506a;
-    --text-3:  #8a93aa;
-    --brand:   #2a52cc;
-    --green:   #059669;
-    --amber:   #b45309;
-    --red:     #dc3545;
+    --bg:      #0f1117;
+    --surface: #161b27;
+    --card:    #1c2333;
+    --card-h:  #232d42;
+    --border:  rgba(255,255,255,.08);
+    --border-h:rgba(255,255,255,.15);
+    --text:    #e2e8f0;
+    --text-2:  #94a3b8;
+    --text-3:  #4b5563;
+    --brand:   #60a5fa;
+    --green:   #34d399;
+    --amber:   #fbbf24;
+    --red:     #f87171;
   }
 }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
@@ -95,50 +95,56 @@ body {
   min-height: 100vh;
 }
 a { color: var(--brand); text-decoration: none; }
-.wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
 
 /* ── Header ───────────────────────────────────────────────── */
 header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 40px 0 32px;
-  margin-bottom: 36px;
-  position: relative;
-  overflow: hidden;
+  padding: 28px 0 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
 }
-header::before {
-  content: "";
-  position: absolute; inset: 0;
-  background:
-    radial-gradient(ellipse 80% 120% at -10% -30%,
-      rgba(108,143,255,.13) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 80% at 110% 110%,
-      rgba(34,211,160,.09) 0%, transparent 50%);
-  pointer-events: none;
+.header-top {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 16px;
 }
-.badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 11px; font-weight: 700; letter-spacing: .12em;
-  text-transform: uppercase; color: var(--text-3);
-  border: 1px solid var(--border);
-  border-radius: 999px; padding: 4px 11px; margin-bottom: 18px;
+.site-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  display: grid; place-items: center;
+  font-size: 20px; flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(37,99,235,.3);
+}
+.site-name {
+  font-size: 14px; font-weight: 700; color: var(--text);
+  letter-spacing: -.01em;
+}
+.badge-live {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase;
+  background: rgba(16,185,129,.12);
+  color: #059669;
+  border-radius: 999px; padding: 3px 9px;
 }
 .badge-dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 0 3px rgba(34,211,160,.2);
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16,185,129,.2);
+  flex-shrink: 0;
 }
 h1 {
-  font-size: clamp(28px, 6vw, 46px);
-  font-weight: 800; letter-spacing: -.04em; line-height: 1.08;
-  margin-bottom: 10px;
+  font-size: clamp(24px, 5vw, 38px);
+  font-weight: 800; letter-spacing: -.04em; line-height: 1.1;
+  margin-bottom: 8px;
 }
 .h1-accent {
-  background: linear-gradient(100deg, var(--brand) 0%, var(--green) 100%);
+  background: linear-gradient(100deg, #2563eb 0%, #7c3aed 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-.sub { color: var(--text-2); font-size: 15px; margin-bottom: 18px; }
+.sub { color: var(--text-2); font-size: 14px; margin-bottom: 14px; }
 .meta-row {
   display: flex; flex-wrap: wrap; gap: 6px 18px;
   color: var(--text-3); font-size: 12.5px;
@@ -149,43 +155,54 @@ h1 {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 .stat {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--r);
-  padding: 18px 20px 16px;
-  position: relative; overflow: hidden;
-  transition: border-color .2s, background .2s;
+  padding: 18px 18px 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  transition: box-shadow .2s, border-color .2s;
 }
-.stat::after {
-  content: "";
-  position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: var(--accent, var(--border));
-  border-radius: var(--r) var(--r) 0 0;
+.stat:hover {
+  border-color: var(--border-h);
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
 }
-.stat:hover { border-color: var(--border-h); }
+.stat-icon {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 20px; margin-bottom: 12px;
+  background: var(--ic-bg, #eff6ff);
+}
 .stat-val {
-  font-size: 36px; font-weight: 800;
+  font-size: 34px; font-weight: 800;
   letter-spacing: -.05em; line-height: 1;
-  color: var(--c, var(--text));
+  color: var(--c, var(--brand));
   font-variant-numeric: tabular-nums;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 .stat-label {
-  font-size: 11px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .1em;
-  color: var(--text-3);
+  font-size: 12px; font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 6px;
 }
+.stat-delta {
+  font-size: 11.5px; font-weight: 600;
+  display: flex; align-items: center; gap: 3px;
+}
+.stat-delta.up   { color: #10b981; }
+.stat-delta.down { color: #ef4444; }
+.stat-delta.flat { color: var(--text-3); }
 
 /* ── Chips ─────────────────────────────────────────────────── */
-.chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 14px 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 4px 0 16px; }
 .chip {
   display: inline-flex; align-items: center; gap: 6px;
   background: var(--card); border: 1px solid var(--border);
-  border-radius: 999px; padding: 4px 12px;
+  border-radius: 999px; padding: 5px 13px;
   font-size: 12.5px; color: var(--text-2);
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
 }
 .chip strong { color: var(--text); font-variant-numeric: tabular-nums; }
 .dot {
@@ -196,7 +213,7 @@ h1 {
 /* ── Section heading ───────────────────────────────────────── */
 .sec-head {
   display: flex; align-items: center; gap: 10px;
-  margin: 40px 0 18px;
+  margin: 28px 0 14px;
 }
 .sec-head-line {
   flex: 1; height: 1px; background: var(--border);
@@ -206,6 +223,16 @@ h1 {
   text-transform: uppercase; letter-spacing: .13em;
   color: var(--text-3); white-space: nowrap;
 }
+
+/* ── Layout 2 cột ──────────────────────────────────────────── */
+.two-col {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.col-left { display: flex; flex-direction: column; gap: 12px; }
+.col-right { min-width: 0; }
 
 /* ── Category heading ─────────────────────────────────────── */
 .cat-head {
@@ -321,7 +348,7 @@ h1 {
   border: 1px solid var(--border);
   border-radius: var(--r);
   padding: 20px 20px 14px;
-  margin-bottom: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
 }
 .chart-title {
   font-size: 12px; font-weight: 700;
@@ -423,11 +450,17 @@ footer {
   color: var(--text-3); font-size: 12.5px;
 }
 
+/* ── Fresher section label ─────────────────────────────────── */
+.fresher-wrap { margin-top: 4px; }
+
 /* ── Mobile ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .two-col { grid-template-columns: 1fr; }
+}
 @media (max-width: 600px) {
-  header { padding: 28px 0 24px; }
   .stats { grid-template-columns: repeat(2, 1fr); }
-  .stat-val { font-size: 30px; }
+  .stat-val { font-size: 26px; }
+  .stat-icon { width: 36px; height: 36px; font-size: 17px; }
   .job-title { font-size: 14.5px; }
 }
 """
@@ -528,20 +561,33 @@ def _stats_html(
     fresher_count: int,
     sources_active: int,
     by_cat: dict[str, int],
+    yesterday_total: int = 0,
 ) -> str:
-    def stat(val: int, label: str, color: str, accent: str) -> str:
+    def _delta_html(current: int, prev: int) -> str:
+        diff = current - prev
+        if diff > 0:
+            return f'<div class="stat-delta up">↑ +{diff} so với hôm qua</div>'
+        if diff < 0:
+            return f'<div class="stat-delta down">↓ {diff} so với hôm qua</div>'
+        return '<div class="stat-delta flat">— Không thay đổi</div>'
+
+    def stat(val: int, label: str, color: str, ic_bg: str, icon: str,
+             delta_html: str = "") -> str:
         return (
-            f'<div class="stat" style="--c:{color};--accent:{accent}">'
+            f'<div class="stat" style="--c:{color}">'
+            f'<div class="stat-icon" style="background:{ic_bg}">{icon}</div>'
             f'<div class="stat-val">{val}</div>'
             f'<div class="stat-label">{label}</div>'
+            f'{delta_html}'
             f'</div>'
         )
 
     grid = (
-        stat(total,         "Tin thực tập",   "var(--text)",  "var(--green)")
-        + stat(new_count,   "Đăng hôm nay",   "var(--green)", "var(--green)")
-        + stat(fresher_count,"Fresher",        "var(--amber)", "var(--amber)")
-        + stat(sources_active,"Nguồn có tin",  "var(--brand)", "var(--brand)")
+        stat(total, "Tin thực tập", "#2563eb", "#dbeafe", "📋",
+             _delta_html(total, yesterday_total))
+        + stat(new_count, "Đăng hôm nay", "#10b981", "#d1fae5", "🆕")
+        + stat(fresher_count, "Fresher", "#f59e0b", "#fef3c7", "🌱")
+        + stat(sources_active, "Nguồn có tin", "#8b5cf6", "#ede9fe", "🌐")
     )
 
     chips = ""
@@ -647,13 +693,21 @@ def _render(
     today_str = today.strftime("%d/%m/%Y")
     today_iso = str(today)
 
+    # Tính số jobs hôm qua để hiển thị delta
+    from datetime import timedelta
+    yesterday_iso = str(today - timedelta(days=1))
+    hist_map_lookup = {r["date"]: r["count"] for r in history}
+    yesterday_total = hist_map_lookup.get(yesterday_iso, 0)
+
     # ── Header
     if is_archive:
         header_title = f'<span class="h1-accent">{today_str}</span>'
         sub_text = "Lưu trữ tin thực tập"
+        site_icon_extra = "📂"
     else:
         header_title = 'Tin thực tập <span class="h1-accent">IT Hà Nội</span>'
         sub_text = "DevOps · Backend Java · Data Engineer — tổng hợp hàng ngày"
+        site_icon_extra = "🎓"
 
     back_btn = ""
     if is_archive and site_url:
@@ -662,7 +716,13 @@ def _render(
     header_html = (
         f'<header>'
         f'<div class="wrap">'
-        f'<div class="badge"><span class="badge-dot"></span>Cập nhật hàng ngày</div>'
+        f'<div class="header-top">'
+        f'<div class="site-icon">{site_icon_extra}</div>'
+        f'<div>'
+        f'<div class="site-name">Thực Tập IT Hà Nội</div>'
+        f'<span class="badge-live"><span class="badge-dot"></span>Cập nhật hàng ngày</span>'
+        f'</div>'
+        f'</div>'
         f'<h1>{header_title}</h1>'
         f'<p class="sub">{sub_text}</p>'
         f'<div class="meta-row">'
@@ -675,23 +735,19 @@ def _render(
         f'</header>'
     )
 
-    # ── Stats
-    stats_html = _stats_html(len(jobs), new_count, len(fresher_jobs), active_sources, by_cat)
+    # ── Stats (với delta hôm qua)
+    stats_html = _stats_html(
+        len(jobs), new_count, len(fresher_jobs), active_sources, by_cat,
+        yesterday_total=yesterday_total,
+    )
 
-    # ── Trend chart (chỉ trang chính)
-    trend_html = ""
-    if not is_archive:
-        trend_html = _trend_html(history, len(jobs), today)
-
-    # ── Sections section heading + filter
+    # ── Filter tabs + job sections
     filter_html = _filters_html(by_cat)
-
     cats_html = ""
     for cat in CATEGORY_ORDER:
         cat_jobs = [j for j in jobs if j.category == cat]
         cats_html += _section(cat, cat_jobs, today, new_ids)
 
-    # Đóng filter wrapper
     sections_block = (
         f'{filter_html}'
         f'<div class="cats">'
@@ -719,6 +775,11 @@ def _render(
             f'</details>'
         )
 
+    # ── Trend chart (chỉ trang chính) — nằm cột trái trong layout 2 cột
+    trend_html = ""
+    if not is_archive:
+        trend_html = _trend_html(history, len(jobs), today)
+
     # ── Archive links (chỉ trang chính)
     archive_html = ""
     if archives and not is_archive:
@@ -728,33 +789,65 @@ def _render(
         )
         archive_html = (
             f'<div class="sec-head">'
-            f'<div class="sec-line sec-head-line"></div>'
+            f'<div class="sec-head-line"></div>'
             f'<div class="sec-title">📂 Lưu trữ</div>'
             f'<div class="sec-head-line"></div>'
             f'</div>'
             f'<div class="arch-grid">{links}</div>'
         )
 
+    # ── Layout 2 cột: trái = biểu đồ + fresher; phải = danh sách jobs
+    if trend_html:
+        col_left = (
+            f'<div class="col-left">'
+            f'<div class="sec-head">'
+            f'<div class="sec-head-line"></div>'
+            f'<div class="sec-title">📈 Xu hướng 14 ngày</div>'
+            f'<div class="sec-head-line"></div>'
+            f'</div>'
+            f'{trend_html}'
+            + (f'<div class="sec-head">'
+               f'<div class="sec-head-line"></div>'
+               f'<div class="sec-title">🌱 Fresher</div>'
+               f'<div class="sec-head-line"></div>'
+               f'</div>'
+               f'<div class="fresher-wrap">{fresher_html}</div>' if fresher_html else '')
+            + f'</div>'
+        )
+        col_right = (
+            f'<div class="col-right">'
+            f'<div class="sec-head">'
+            f'<div class="sec-head-line"></div>'
+            f'<div class="sec-title">💼 Danh sách tin</div>'
+            f'<div class="sec-head-line"></div>'
+            f'</div>'
+            f'{sections_block}'
+            f'</div>'
+        )
+        main_content = f'<div class="two-col">{col_left}{col_right}</div>'
+    else:
+        # Trang archive: layout đơn cột
+        main_content = (
+            f'<div class="sec-head">'
+            f'<div class="sec-head-line"></div>'
+            f'<div class="sec-title">💼 Danh sách tin</div>'
+            f'<div class="sec-head-line"></div>'
+            f'</div>'
+            f'{sections_block}'
+            + (f'<div class="sec-head">'
+               f'<div class="sec-head-line"></div>'
+               f'<div class="sec-title">🌱 Fresher</div>'
+               f'<div class="sec-head-line"></div>'
+               f'</div>{fresher_html}' if fresher_html else '')
+        )
+
     body = (
         f'{header_html}'
         f'<main class="wrap">'
         f'{stats_html}'
-        + (f'<div class="sec-head"><div class="sec-head-line"></div>'
-           f'<div class="sec-title">📈 Xu hướng</div>'
-           f'<div class="sec-head-line"></div></div>{trend_html}' if trend_html else '')
-        + f'<div class="sec-head">'
-        f'<div class="sec-head-line"></div>'
-        f'<div class="sec-title">💼 Danh sách tin</div>'
-        f'<div class="sec-head-line"></div>'
-        f'</div>'
-        f'{sections_block}'
-        + (f'<div class="sec-head">'
-           f'<div class="sec-head-line"></div>'
-           f'<div class="sec-title">🌱 Fresher</div>'
-           f'<div class="sec-head-line"></div>'
-           f'</div>{fresher_html}' if fresher_html else '')
-        + f'{archive_html}'
-        f'<footer>Dữ liệu tổng hợp tự động từ ITviec, VietnamWorks, Glints, LinkedIn.</footer>'
+        f'{main_content}'
+        f'{archive_html}'
+        f'<footer>Dữ liệu tổng hợp tự động từ ITviec, VietnamWorks, Glints, LinkedIn, TopCV.</footer>'
         f'</main>'
     )
 

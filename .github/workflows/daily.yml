@@ -28,6 +28,9 @@ jobs:
       - name: Cài dependencies
         run: pip install -r requirements.txt
 
+      - name: Cài Playwright Chromium (fallback TopCV Cloudflare)
+        run: python -m playwright install chromium --with-deps
+
       - name: Gửi tin tuyển dụng
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}

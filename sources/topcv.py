@@ -36,6 +36,14 @@ try:
 except ImportError:  # pragma: no cover
     curl_requests = None
 
+# Playwright dùng làm fallback khi curl_cffi bị Cloudflare JS-challenge chặn.
+# Không giải quyết được IP-reputation block thuần tuý (chỉ tầng TLS/JS).
+try:
+    import playwright  # noqa: F401 — chỉ kiểm tra cài đặt
+    _PLAYWRIGHT_OK = True
+except ImportError:
+    _PLAYWRIGHT_OK = False
+
 log = logging.getLogger(__name__)
 
 BASE = "https://www.topcv.vn"
@@ -166,7 +174,37 @@ def _parse_card(card, category: str) -> Job | None:
     )
 
 
-def _parse_html(html: str, category: str) -> list[Job]:
+def _fetch_playwright(url: str) -> str | None:
+    """Dùng Playwright headless Chromium để bypass Cloudflare JS challenge.
+
+    Hiệu quả khi Cloudflare dùng 5-second shield / JS challenge.
+    Không bypass được IP-reputation block thuần tuý (GitHub Actions Azure IP).
+    """
+    if not _PLAYWRIGHT_OK:
+        return None
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            ctx = browser.new_context(
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/124.0.0.0 Safari/537.36"
+                ),
+                locale="vi-VN",
+                timezone_id="Asia/Ho_Chi_Minh",
+            )
+            page = ctx.new_page()
+            page.goto(url, wait_until="domcontentloaded", timeout=30_000)
+            # Đợi thêm 2 giây để JS challenge (nếu có) resolve xong
+            page.wait_for_timeout(2_000)
+            html = page.content()
+            browser.close()
+            return html
+    except Exception as exc:
+        log.warning("TopCV Playwright lỗi: %s", exc)
+        return None
     """Tách các tin từ HTML trang tìm kiếm TopCV."""
     soup = BeautifulSoup(html, "lxml")
     jobs: list[Job] = []
@@ -197,6 +235,9 @@ class TopCVSource(BaseSource):
 
         jobs: list[Job] = []
         for category, url in _QUERIES.items():
+            html: str | None = None
+
+            # Bước 1: thử curl_cffi (giả lập TLS Chrome)
             try:
                 resp = curl_requests.get(
                     url,
@@ -204,21 +245,31 @@ class TopCVSource(BaseSource):
                     headers={"Accept-Language": "vi,en-US;q=0.9,en;q=0.8"},
                     timeout=HTTP_TIMEOUT,
                 )
+                if resp.status_code == 200:
+                    html = resp.text
+                else:
+                    log.warning(
+                        "TopCV %s: curl_cffi HTTP %s%s",
+                        category, resp.status_code,
+                        " — thử Playwright fallback" if resp.status_code == 403 and _PLAYWRIGHT_OK else "",
+                    )
             except Exception as exc:
-                log.warning("TopCV %s: lỗi kết nối (%s)", category, exc)
+                log.warning("TopCV %s: lỗi kết nối curl_cffi (%s)", category, exc)
+
+            # Bước 2: fallback Playwright khi curl_cffi bị 403 (Cloudflare JS challenge)
+            if html is None and _PLAYWRIGHT_OK:
+                log.info("TopCV %s: thử Playwright...", category)
+                html = _fetch_playwright(url)
+
+            if html is None:
                 time.sleep(REQUEST_DELAY)
                 continue
 
-            if resp.status_code != 200:
-                log.warning("TopCV %s: HTTP %s", category, resp.status_code)
-                time.sleep(REQUEST_DELAY)
-                continue
-
-            found = _parse_html(resp.text, category)
+            found = _parse_html(html, category)
             jobs.extend(found)
             log.info("TopCV %-14s -> %2d tin", category, len(found))
             time.sleep(REQUEST_DELAY)
 
         if not jobs:
-            log.warning("TopCV không lấy được tin nào — có thể bị Cloudflare chặn.")
+            log.warning("TopCV không lấy được tin nào — có thể bị Cloudflare chặn IP.")
         return jobs
