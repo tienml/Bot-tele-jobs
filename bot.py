@@ -23,7 +23,7 @@ from telegram.ext import (
 
 import storage
 import webpage
-from config import BOT_TOKEN, DAILY_HOUR, DAILY_MINUTE, MAX_AGE_DAYS, TIMEZONE, TOP_N
+from config import BOT_TOKEN, DAILY_HOUR, DAILY_MINUTE, TIMEZONE, TOP_N
 from filters import CATEGORY_LABELS, filter_and_score, filter_fresher
 from sources import ALL_SOURCES
 
@@ -51,18 +51,15 @@ def fetch_all_jobs() -> tuple[list, list]:
         except Exception:
             log.exception("%s fetch failed", source.name)
 
-    # Loại job cũ hơn MAX_AGE_DAYS
+    # Lấy tất cả job scrape được, không lọc theo ngày đăng.
+    # Job đăng lâu nhưng vẫn còn trên site vẫn là job đang mở.
+    # score_job() đã tự cộng điểm cho tin mới hơn → tin cũ sẽ xuống cuối danh sách.
     today = date.today()
-    recent = [
-        j for j in all_jobs
-        if j.posted_date is None or (today - j.posted_date).days <= MAX_AGE_DAYS
-    ]
-
-    intern = filter_and_score(recent, today)
-    fresher = filter_fresher(recent, today)
+    intern = filter_and_score(all_jobs, today)
+    fresher = filter_fresher(all_jobs, today)
     log.info(
-        "Fetched %d → recent %d → intern %d, fresher %d",
-        len(all_jobs), len(recent), len(intern), len(fresher),
+        "Fetched %d → intern %d, fresher %d",
+        len(all_jobs), len(intern), len(fresher),
     )
     return intern, fresher
 
