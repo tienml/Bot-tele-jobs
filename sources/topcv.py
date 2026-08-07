@@ -177,34 +177,52 @@ def _parse_card(card, category: str) -> Job | None:
 def _fetch_playwright(url: str) -> str | None:
     """Dùng Playwright headless Chromium để bypass Cloudflare JS challenge.
 
+    Chạy trong thread riêng để tránh xung đột với asyncio event loop
+    (curl_cffi và python-telegram-bot đều dùng asyncio).
     Hiệu quả khi Cloudflare dùng 5-second shield / JS challenge.
     Không bypass được IP-reputation block thuần tuý (GitHub Actions Azure IP).
     """
     if not _PLAYWRIGHT_OK:
         return None
-    try:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            ctx = browser.new_context(
-                user_agent=(
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/124.0.0.0 Safari/537.36"
-                ),
-                locale="vi-VN",
-                timezone_id="Asia/Ho_Chi_Minh",
-            )
-            page = ctx.new_page()
-            page.goto(url, wait_until="domcontentloaded", timeout=30_000)
-            # Đợi thêm 2 giây để JS challenge (nếu có) resolve xong
-            page.wait_for_timeout(2_000)
-            html = page.content()
-            browser.close()
-            return html
-    except Exception as exc:
-        log.warning("TopCV Playwright lỗi: %s", exc)
-        return None
+
+    import concurrent.futures
+
+    def _run_sync() -> str | None:
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                ctx = browser.new_context(
+                    user_agent=(
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/124.0.0.0 Safari/537.36"
+                    ),
+                    locale="vi-VN",
+                    timezone_id="Asia/Ho_Chi_Minh",
+                )
+                page = ctx.new_page()
+                page.goto(url, wait_until="domcontentloaded", timeout=30_000)
+                # Đợi 2s để JS challenge (nếu có) resolve xong
+                page.wait_for_timeout(2_000)
+                html = page.content()
+                browser.close()
+                return html
+        except Exception as exc:
+            log.warning("TopCV Playwright lỗi: %s", exc)
+            return None
+
+    # Chạy trong thread riêng — sync_playwright() không chạy được trong asyncio loop
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(_run_sync)
+        try:
+            return future.result(timeout=40)
+        except concurrent.futures.TimeoutError:
+            log.warning("TopCV Playwright: timeout sau 40s")
+            return None
+        except Exception as exc:
+            log.warning("TopCV Playwright thread lỗi: %s", exc)
+            return None
     """Tách các tin từ HTML trang tìm kiếm TopCV."""
     soup = BeautifulSoup(html, "lxml")
     jobs: list[Job] = []
