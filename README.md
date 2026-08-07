@@ -13,7 +13,7 @@ Chỉ tin **thực tập** được gửi qua Telegram. Tin **fresher/junior** v
 | **Glints** | JSON trong `__NEXT_DATA__` | Bỏ qua filter địa điểm trên URL nên phải lọc Hà Nội ở `filters.py` |
 | **LinkedIn** | Endpoint `jobs-guest` | Không cần API/đăng nhập. Xem lưu ý bên dưới |
 
-Không dùng được: **TopDev** (chặn ở tầng TLS handshake), **TopCV** / **JobsGO** (Cloudflare 403), **Facebook** (tin thực tập IT nằm trong group kín, cần đăng nhập).
+Đã thử và không dùng được (scraper đã xoá khỏi repo): **TopDev** chặn ngay ở tầng TLS handshake, **TopCV** / **JobsGO** trả Cloudflare 403, **Facebook** để tin thực tập IT trong group kín nên phải đăng nhập.
 
 ### Lưu ý về LinkedIn
 - LinkedIn **tự nới lỏng** truy vấn nhiều từ: query `"devops intern"` bị hiểu thành `"devops"` nên trả về toàn tin Senior/Middle. Vì vậy chỉ hỏi LinkedIn theo **cấp bậc** (`intern`, `thực tập`...) rồi để `filters.py` lọc ngành.
@@ -54,8 +54,13 @@ Runner của GitHub Actions là ephemeral (xoá sạch sau mỗi lần chạy) n
 ```bash
 pip install -r requirements.txt
 cp .env.example .env       # rồi điền BOT_TOKEN
-python bot.py              # chế độ polling, có lệnh /start /jobs /stop
+
+python run_once.py         # gửi một lần rồi thoát — giống hệt lúc cron chạy
+python bot.py              # tuỳ chọn: chế độ polling, có lệnh /start /jobs /stop
 ```
+
+`run_once.py` cần thêm biến `CHAT_IDS`; `bot.py` thì không, vì nó tự lưu người
+đăng ký qua lệnh `/start`. Bản deploy đang dùng là `run_once.py` + cron.
 
 Trên Windows, terminal mặc định dùng cp1252 và sẽ crash khi in tiếng Việt. Đặt `PYTHONIOENCODING=utf-8` trước khi chạy.
 
@@ -81,9 +86,7 @@ bot_tele/
 │   ├── itviec.py
 │   ├── vietnamworks.py
 │   ├── glints.py
-│   ├── linkedin.py
-│   ├── topdev.py           # Không dùng được (TLS block), giữ để tham khảo
-│   └── topcv.py            # Không dùng được (Cloudflare), giữ để tham khảo
+│   └── linkedin.py
 ├── .github/workflows/daily.yml
 ├── docs/                   # Trang GitHub Pages, sinh tự động
 └── jobs.db                 # Lịch sử đã gửi, commit theo repo

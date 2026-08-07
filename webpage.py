@@ -35,8 +35,6 @@ SOURCE_COLORS = {
     "VietnamWorks": "#4a9be0",
     "Glints": "#2fc39b",
     "LinkedIn": "#5b9cff",
-    "TopDev": "#e8a33d",
-    "TopCV": "#7c8cf8",
 }
 
 _CSS = """
