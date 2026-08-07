@@ -27,7 +27,7 @@ from bot import (
     make_site_keyboard,
     make_top_keyboard,
 )
-from config import BOT_TOKEN
+from config import BOT_TOKEN, CLEAN_OLD_DIGEST
 
 logging.basicConfig(
     level=logging.INFO,
@@ -58,6 +58,25 @@ def get_chat_ids() -> list[int]:
         log.error("CHAT_IDS không chứa ID hợp lệ nào.")
         sys.exit(1)
     return ids
+
+
+async def _delete_old_digest(bot: Bot, chat_id: int) -> None:
+    """Xoá bản thống kê gần nhất của chat này, nếu còn xoá được.
+
+    Telegram chỉ cho bot xoá tin của chính nó trong vòng 48 giờ. Quá hạn
+    (hoặc người dùng đã tự xoá) thì API trả BadRequest — coi như xong việc,
+    bỏ bản ghi đi để lần sau không thử lại vô ích.
+    """
+    message_id = storage.get_last_digest(chat_id)
+    if not message_id:
+        return
+    try:
+        await bot.delete_message(chat_id=chat_id, message_id=message_id)
+        log.info("Đã xoá tin thống kê cũ %s ở chat %s", message_id, chat_id)
+    except Exception as exc:
+        log.info("Không xoá được tin cũ %s ở chat %s (%s), bỏ qua.",
+                 message_id, chat_id, exc)
+    storage.clear_last_digest(chat_id)
 
 
 async def main() -> None:
@@ -110,8 +129,10 @@ async def main() -> None:
     bot = Bot(token=BOT_TOKEN)
     async with bot:
         for chat_id in chat_ids:
+            if CLEAN_OLD_DIGEST:
+                await _delete_old_digest(bot, chat_id)
             try:
-                await bot.send_message(
+                sent = await bot.send_message(
                     chat_id=chat_id,
                     text=msg,
                     parse_mode="HTML",
@@ -119,6 +140,8 @@ async def main() -> None:
                     disable_web_page_preview=True,
                 )
                 sent_ok = True
+                if CLEAN_OLD_DIGEST:
+                    storage.set_last_digest(chat_id, sent.message_id)
                 log.info("Đã gửi tới %s", chat_id)
             except Exception as exc:
                 log.warning("Gửi tới %s thất bại: %s", chat_id, exc)

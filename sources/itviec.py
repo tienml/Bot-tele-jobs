@@ -26,6 +26,26 @@ log = logging.getLogger(__name__)
 BASE = "https://itviec.com"
 SEARCH_URL = BASE + "/it-jobs/{query}?city=ha-noi"
 
+# ITviec đứng sau Cloudflare và chặn khá mạnh IP datacenter (GitHub Actions).
+# Gửi kèm bộ header giống trình duyệt thật để giảm khả năng bị 403; nếu vẫn bị
+# chặn thì đó là chặn theo IP, không phải lỗi parse.
+BROWSER_HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,"
+              "image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "vi,en-US;q=0.9,en;q=0.8",
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache",
+    "Referer": BASE + "/it-jobs",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
+    "sec-ch-ua": '"Chromium";v="120", "Not(A:Brand";v="24", "Google Chrome";v="120"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+}
+
 _POSTED_RE = re.compile(r"(\d+)\s*(minute|hour|day|week|month)", re.I)
 _CLEAN_RE = re.compile(r"\s+")
 
@@ -112,12 +132,34 @@ def _parse_card(card) -> Job | None:
 class ITviecSource(BaseSource):
     name = "ITviec"
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.session.headers.update(BROWSER_HEADERS)
+
     def fetch(self) -> Iterable[Job]:
         jobs: list[Job] = []
+        blocked = 0
         for query in ITVIEC_QUERIES:
             url = SEARCH_URL.format(query=query)
             try:
                 resp = self.get(url, timeout=HTTP_TIMEOUT)
+                if resp.status_code == 403:
+                    # Cloudflare chặn theo IP: gặp trên runner GitHub Actions
+                    # nhưng chạy ở máy nhà thì bình thường. Bỏ luôn các query
+                    # còn lại vì chắc chắn cũng bị chặn, đỡ mất thời gian.
+                    blocked += 1
+                    log.warning(
+                        "ITviec %s -> HTTP 403 (Cloudflare chặn IP, không phải lỗi parse)",
+                        query,
+                    )
+                    if blocked >= 2:
+                        log.warning(
+                            "ITviec chặn IP này — bỏ qua %d query còn lại.",
+                            len(ITVIEC_QUERIES) - ITVIEC_QUERIES.index(query) - 1,
+                        )
+                        break
+                    time.sleep(REQUEST_DELAY)
+                    continue
                 if resp.status_code != 200:
                     log.warning("ITviec %s -> HTTP %s", query, resp.status_code)
                     continue

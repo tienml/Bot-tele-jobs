@@ -103,6 +103,13 @@ PAGES_URL = os.environ.get(
 # Số ngày giữ bản lưu trong docs/archive/ (và số liệu trong data.json).
 ARCHIVE_KEEP_DAYS = int(os.environ.get("ARCHIVE_KEEP_DAYS", "30"))
 
+# --- Dọn tin nhắn cũ -----------------------------------------------------
+# Bật: trước khi gửi bản thống kê mới, bot xoá bản thống kê hôm trước để
+# chat chỉ còn một tin duy nhất. Lưu ý Telegram chỉ cho bot xoá tin của
+# chính nó trong vòng 48 giờ, nên nếu bot nghỉ vài ngày thì tin cũ sẽ ở lại.
+# Đặt CLEAN_OLD_DIGEST=0 để tắt và giữ lại toàn bộ lịch sử trong chat.
+CLEAN_OLD_DIGEST = os.environ.get("CLEAN_OLD_DIGEST", "1") not in ("0", "false", "False")
+
 # cityId = 24 là Hà Nội (xác minh qua facet API).
 HANOI_CITY_ID = 24
 

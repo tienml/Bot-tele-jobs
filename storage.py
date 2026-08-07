@@ -32,6 +32,15 @@ def init_db() -> None:
                 sent_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # ID tin nhắn thống kê gần nhất của từng chat, để hôm sau xoá đi
+        # trước khi gửi bản mới (giữ chat gọn, chỉ còn 1 tin thống kê).
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS last_digest (
+                chat_id    INTEGER PRIMARY KEY,
+                message_id INTEGER NOT NULL,
+                sent_at    TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         conn.commit()
     log.info("Database initialized at %s", DB_PATH)
 
@@ -87,6 +96,35 @@ def mark_sent(jobs: list) -> None:
             "INSERT OR IGNORE INTO sent_jobs (job_id) VALUES (?)",
             [(j.job_id,) for j in jobs],
         )
+        conn.commit()
+
+
+def get_last_digest(chat_id: int) -> int | None:
+    """ID tin nhắn thống kê gần nhất đã gửi cho chat này (None nếu chưa có)."""
+    with _get_conn() as conn:
+        row = conn.execute(
+            "SELECT message_id FROM last_digest WHERE chat_id = ?", (chat_id,)
+        ).fetchone()
+    return row["message_id"] if row else None
+
+
+def set_last_digest(chat_id: int, message_id: int) -> None:
+    """Ghi nhận tin nhắn thống kê vừa gửi, thay thế bản ghi cũ của chat đó."""
+    with _get_conn() as conn:
+        conn.execute(
+            "INSERT INTO last_digest (chat_id, message_id, sent_at) "
+            "VALUES (?, ?, CURRENT_TIMESTAMP) "
+            "ON CONFLICT(chat_id) DO UPDATE SET "
+            "message_id = excluded.message_id, sent_at = excluded.sent_at",
+            (chat_id, message_id),
+        )
+        conn.commit()
+
+
+def clear_last_digest(chat_id: int) -> None:
+    """Bỏ bản ghi tin nhắn cũ (dùng khi Telegram báo không xoá được nữa)."""
+    with _get_conn() as conn:
+        conn.execute("DELETE FROM last_digest WHERE chat_id = ?", (chat_id,))
         conn.commit()
 
 
