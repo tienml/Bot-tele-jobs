@@ -1,33 +1,53 @@
-name: Deploy to Fly.io
+name: Deploy to Fly.io (tuỳ chọn, chạy tay)
 
+# Cách triển khai CŨ: dựng máy chạy bot.py 24/7 trên Fly.io.
+#
+# Dự án hiện dùng daily.yml (GitHub Actions cron) nên workflow này KHÔNG còn
+# chạy tự động. Giữ lại để ai muốn quay về cách cũ thì bấm chạy tay.
+#
+# Cảnh báo trước khi dùng:
+#   - Chạy song song với daily.yml sẽ gửi TRÙNG tin mỗi ngày (bot.py có
+#     job_queue riêng, gửi lúc DAILY_HOUR; daily.yml gửi lúc 8:00).
+#   - Máy Fly không commit được docs/ lên repo nên trang GitHub Pages sẽ
+#     đứng yên, nút "Xem tất cả" trong Telegram trỏ vào dữ liệu cũ.
+#   - Cần secret FLY_API_TOKEN (lấy bằng `flyctl tokens create deploy`).
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      APP_NAME: telegram-job-bot
     steps:
       - uses: actions/checkout@v4
+
+      - name: Kiểm tra FLY_API_TOKEN
+        run: |
+          if [ -z "$FLY_API_TOKEN" ]; then
+            echo "::error::Chưa có secret FLY_API_TOKEN." \
+                 "Tạo bằng 'flyctl tokens create deploy' rồi thêm vào" \
+                 "Settings > Secrets and variables > Actions."
+            exit 1
+          fi
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Tạo app nếu chưa có
-        run: flyctl apps create telegram-job-bot --machines 2>/dev/null || true
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl apps create "$APP_NAME" --machines 2>/dev/null || true
 
       - name: Tạo volume lưu database nếu chưa có
-        run: flyctl volumes create bot_data --size 1 --region sin --app telegram-job-bot 2>/dev/null || true
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          flyctl volumes create bot_data --size 1 --region sin \
+            --app "$APP_NAME" --yes 2>/dev/null || true
 
       - name: Cập nhật secrets
-        run: flyctl secrets set BOT_TOKEN=${{ secrets.BOT_TOKEN }} --app telegram-job-bot
+        # Truyền token qua biến môi trường, không nội suy thẳng vào dòng lệnh
+        # (dòng lệnh hiện trong process list của runner).
         env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: flyctl secrets set "BOT_TOKEN=$BOT_TOKEN" --app "$APP_NAME"
 
       - name: Deploy
-        run: flyctl deploy --remote-only --app telegram-job-bot
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl deploy --remote-only --app "$APP_NAME"

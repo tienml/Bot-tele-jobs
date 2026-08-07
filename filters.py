@@ -13,8 +13,14 @@ from sources.base import Job
 
 
 def normalize(text: str) -> str:
-    """Bỏ dấu tiếng Việt, hạ chữ thường để so khớp từ khoá cho chắc."""
-    text = unicodedata.normalize("NFD", text or "")
+    """Bỏ dấu tiếng Việt, hạ chữ thường để so khớp từ khoá cho chắc.
+
+    đ/Đ là chữ riêng trong Unicode nên NFD không tách được thành d + dấu,
+    phải đổi tay — nếu không "Đống Đa" ra "đong đa" và không khớp từ khoá
+    "dong da".
+    """
+    text = (text or "").replace("đ", "d").replace("Đ", "D")
+    text = unicodedata.normalize("NFD", text)
     text = "".join(c for c in text if unicodedata.category(c) != "Mn")
     return re.sub(r"\s+", " ", text.lower()).strip()
 
@@ -254,13 +260,19 @@ def _collect(jobs: list[Job], level_ok, today: date) -> list[Job]:
         job.category = category
         job.score = score_job(job, today)
 
-        # Job trùng giữa các nguồn: giữ bản điểm cao hơn.
+        # Job trùng giữa các nguồn (cùng công ty, cùng vị trí): giữ bản MÔ TẢ
+        # KỸ HƠN — có lương, có ngày đăng, có địa điểm, nhiều tag. Điểm xếp
+        # hạng thì lấy mức cao nhất trong nhóm trùng, để bản chi tiết hơn
+        # không bị tụt hạng chỉ vì nguồn kia chấm điểm cao hơn chút.
         key = job.dedupe_key
-        if key in seen:
-            if job.score > seen[key].score:
-                seen[key] = job
+        old = seen.get(key)
+        if old is None:
+            seen[key] = job
             continue
-        seen[key] = job
+        best_score = max(job.score, old.score)
+        if job.detail_score > old.detail_score:
+            seen[key] = job
+        seen[key].score = best_score
 
     return sorted(seen.values(), key=lambda j: j.score, reverse=True)
 
