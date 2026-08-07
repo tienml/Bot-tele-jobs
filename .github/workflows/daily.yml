@@ -11,7 +11,7 @@ jobs:
   send-jobs:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # cần để commit jobs.db ngược lại repo
+      contents: write   # cần để commit jobs.db và docs/ ngược lại repo
 
     steps:
       - name: Checkout code
@@ -35,13 +35,14 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: python run_once.py
 
-      - name: Lưu jobs.db vào repo (giữ lịch sử đã gửi)
+      - name: Lưu jobs.db + trang thống kê vào repo
         if: always()
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add jobs.db
-          # Chỉ commit nếu jobs.db thực sự thay đổi
-          git diff --cached --quiet || git commit -m "chore: cập nhật jobs.db [skip ci]"
+          # jobs.db giữ lịch sử "đã gửi"; docs/ là trang GitHub Pages.
+          git add jobs.db docs
+          # Chỉ commit nếu có thay đổi thật
+          git diff --cached --quiet || git commit -m "chore: cập nhật tin tuyển dụng [skip ci]"
           git pull --rebase origin main
           git push origin main

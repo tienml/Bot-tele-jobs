@@ -80,8 +80,28 @@ LINKEDIN_QUERIES = [
     "thực tập sinh",
 ]
 LINKEDIN_LOCATION = "Hanoi, Hanoi, Vietnam"
-LINKEDIN_PAGES = 10         # 10 x 10 = 100 tin mỗi truy vấn
+# Thực đo: LinkedIn bắt đầu trả HTTP 429 quanh trang thứ 6 (start=50). Xin
+# quá số này thì các truy vấn sau bị chặn sạch, nên giữ 5 trang cho an toàn.
+LINKEDIN_PAGES = 5          # 5 x 10 = 50 tin mỗi truy vấn
 LINKEDIN_TPR = "r2592000"   # chỉ tin đăng trong 30 ngày gần nhất
+# Nghỉ bao lâu khi gặp 429 rồi mới thử lại (giây).
+LINKEDIN_COOLDOWN = int(os.environ.get("LINKEDIN_COOLDOWN", "45"))
+# Nghỉ giữa hai truy vấn LinkedIn — dài hơn REQUEST_DELAY chung vì LinkedIn
+# tính hạn mức theo cụm request liên tiếp.
+LINKEDIN_QUERY_DELAY = 6.0
+
+# --- Trang web thống kê (GitHub Pages) -----------------------------------
+# Trang tĩnh được sinh vào thư mục này rồi commit lên repo; GitHub Pages
+# phục vụ nó miễn phí. Bật ở repo: Settings > Pages > Source: main /docs.
+SITE_DIR = Path(os.environ.get("SITE_DIR", BASE_DIR / "docs"))
+
+# URL công khai của trang. Đặt qua secret/biến PAGES_URL nếu tên repo khác.
+PAGES_URL = os.environ.get(
+    "PAGES_URL", "https://tienml.github.io/Bot-tele-jobs/"
+)
+
+# Số ngày giữ bản lưu trong docs/archive/ (và số liệu trong data.json).
+ARCHIVE_KEEP_DAYS = int(os.environ.get("ARCHIVE_KEEP_DAYS", "30"))
 
 # cityId = 24 là Hà Nội (xác minh qua facet API).
 HANOI_CITY_ID = 24

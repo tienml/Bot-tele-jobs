@@ -27,6 +27,15 @@ INTERN_KEYWORDS = [
     "entry level",  # Một số tin IT ghi "Entry Level"
 ]
 
+# --- Cấp bậc: fresher/junior (KHÔNG gửi Telegram) ------------------------
+# Người dùng chỉ muốn nhận tin thực tập, nhưng vẫn muốn thấy nhóm này để
+# tham khảo. Nên chúng được thu riêng và chỉ liệt kê trên trang web.
+FRESHER_KEYWORDS = [
+    "fresher", "trainee", "junior", "moi tot nghiep", "graduate program",
+    "management trainee", "apprentice", "no experience",
+    "khong yeu cau kinh nghiem", "chua co kinh nghiem",
+]
+
 # Từ khoá loại thẳng: các tin senior lọt vào vì search "devops" trả cả tin cao cấp.
 SENIOR_KEYWORDS = [
     # "sr" và "mid" viết tắt không có dấu chấm ("Sr Java Developer",
@@ -138,6 +147,20 @@ def is_intern_level(job: Job) -> bool:
     return _contains(haystack, INTERN_KEYWORDS)
 
 
+def is_fresher_level(job: Job) -> bool:
+    """Nhận tin fresher/junior — nhóm tham khảo, không gửi trong Top 5.
+
+    Tin đã là intern thì không tính vào đây (một tin ghi "Intern/Fresher"
+    được xếp vào nhóm intern vì vẫn nhận sinh viên).
+    """
+    if is_intern_level(job):
+        return False
+    haystack = normalize(f"{job.title} {' '.join(job.tags)} {job.posted_text}")
+    if _contains(normalize(job.title), SENIOR_KEYWORDS):
+        return False
+    return _contains(haystack, FRESHER_KEYWORDS)
+
+
 def is_excluded(job: Job) -> bool:
     """Loại nghề ngoài phạm vi dù có tag trùng.
 
@@ -215,14 +238,12 @@ def score_job(job: Job, today: date | None = None) -> int:
     return score
 
 
-def filter_and_score(jobs: list[Job], today: date | None = None) -> list[Job]:
-    """Lọc intern + Hà Nội + đúng ngành, gộp trùng, tính điểm, sắp xếp giảm dần."""
-    today = today or date.today()
-    result: list[Job] = []
+def _collect(jobs: list[Job], level_ok, today: date) -> list[Job]:
+    """Lọc theo hàm cấp bậc `level_ok` + Hà Nội + đúng ngành, gộp trùng, xếp điểm."""
     seen: dict[str, Job] = {}
 
     for job in jobs:
-        if not is_intern_level(job) or not is_in_hanoi(job):
+        if not level_ok(job) or not is_in_hanoi(job):
             continue
         if is_excluded(job):
             continue
@@ -241,5 +262,17 @@ def filter_and_score(jobs: list[Job], today: date | None = None) -> list[Job]:
             continue
         seen[key] = job
 
-    result = sorted(seen.values(), key=lambda j: j.score, reverse=True)
-    return result
+    return sorted(seen.values(), key=lambda j: j.score, reverse=True)
+
+
+def filter_and_score(jobs: list[Job], today: date | None = None) -> list[Job]:
+    """Danh sách tin THỰC TẬP — đây là nhóm được gửi qua Telegram."""
+    return _collect(jobs, is_intern_level, today or date.today())
+
+
+def filter_fresher(jobs: list[Job], today: date | None = None) -> list[Job]:
+    """Danh sách tin FRESHER/JUNIOR — chỉ liệt kê trên trang web để tham khảo.
+
+    Không đưa vào Telegram vì người dùng chỉ muốn nhận tin thực tập.
+    """
+    return _collect(jobs, is_fresher_level, today or date.today())

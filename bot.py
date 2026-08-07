@@ -22,9 +22,9 @@ from telegram.ext import (
 )
 
 import storage
-import telegraph
+import webpage
 from config import BOT_TOKEN, DAILY_HOUR, DAILY_MINUTE, MAX_AGE_DAYS, TIMEZONE, TOP_N
-from filters import CATEGORY_LABELS, filter_and_score
+from filters import CATEGORY_LABELS, filter_and_score, filter_fresher
 from sources import ALL_SOURCES
 
 logging.basicConfig(
@@ -35,8 +35,13 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def fetch_all_jobs() -> list:
-    """Thu thập job từ tất cả nguồn, lọc và chấm điểm."""
+def fetch_all_jobs() -> tuple[list, list]:
+    """Thu thập job từ tất cả nguồn, lọc và chấm điểm.
+
+    Trả về hai danh sách:
+    - intern: tin thực tập — nhóm duy nhất được gửi qua Telegram.
+    - fresher: tin fresher/junior — chỉ liệt kê trên trang web để tham khảo.
+    """
     all_jobs = []
     for source in ALL_SOURCES:
         try:
@@ -53,9 +58,13 @@ def fetch_all_jobs() -> list:
         if j.posted_date is None or (today - j.posted_date).days <= MAX_AGE_DAYS
     ]
 
-    filtered = filter_and_score(recent, today)
-    log.info("Fetched %d → recent %d → filtered %d", len(all_jobs), len(recent), len(filtered))
-    return filtered
+    intern = filter_and_score(recent, today)
+    fresher = filter_fresher(recent, today)
+    log.info(
+        "Fetched %d → recent %d → intern %d, fresher %d",
+        len(all_jobs), len(recent), len(intern), len(fresher),
+    )
+    return intern, fresher
 
 
 def format_summary(jobs: list, today: date) -> str:
@@ -107,23 +116,47 @@ def format_summary(jobs: list, today: date) -> str:
     return "\n".join(lines)
 
 
+def _site_button(site_url: str, total: int, fresher: int) -> InlineKeyboardButton:
+    """Nút mở trang web thống kê.
+
+    `total` là tổng số tin thực tập của cả ngày (không chỉ tin mới), `fresher`
+    là số tin fresher/junior — nhóm này chỉ nằm trên trang web, không gửi
+    qua Telegram.
+    """
+    label = f"📊 Xem tất cả {total} tin thực tập"
+    if fresher:
+        label += f" + {fresher} fresher"
+    return InlineKeyboardButton(text=label, url=site_url)
+
+
 def make_top_keyboard(
-    top_jobs: list, all_url: str | None = None
+    top_jobs: list,
+    site_url: str | None = None,
+    total: int | None = None,
+    fresher: int = 0,
 ) -> InlineKeyboardMarkup:
-    """Tạo inline keyboard cho TOP_N job + nút xem tất cả (nếu có URL)."""
+    """Tạo inline keyboard: nút trang web ở đầu, rồi TOP_N job có link riêng.
+
+    `top_jobs` là danh sách tin ĐƯỢC GỬI (đã xếp theo điểm). `total` là tổng
+    số tin thực tập của cả ngày; để None thì lấy luôn len(top_jobs).
+    """
     buttons = []
-    # Nút "Xem tất cả" ở đầu nếu có trang Telegraph.
-    # top_jobs là danh sách ĐẦY ĐỦ đã sắp xếp, nên len() chính là tổng số tin.
-    if all_url:
-        buttons.append([InlineKeyboardButton(
-            text=f"📋 Xem tất cả {len(top_jobs)} tin hôm nay",
-            url=all_url,
-        )])
+    if site_url:
+        buttons.append([
+            _site_button(site_url, total if total is not None else len(top_jobs), fresher)
+        ])
     for i, job in enumerate(top_jobs[:TOP_N], 1):
         title_short = job.title if len(job.title) <= 50 else job.title[:47] + "..."
         label = f"{i}. {title_short}"
         buttons.append([InlineKeyboardButton(text=label, url=job.url)])
     return InlineKeyboardMarkup(buttons)
+
+
+def make_site_keyboard(
+    site_url: str, total: int, fresher: int
+) -> InlineKeyboardMarkup:
+    """Keyboard chỉ có nút trang web — dùng khi hôm đó không có tin mới nào."""
+    return InlineKeyboardMarkup([[_site_button(site_url, total, fresher)]])
 
 
 async def send_daily(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -135,28 +168,37 @@ async def send_daily(context: ContextTypes.DEFAULT_TYPE) -> None:
     if deleted:
         log.info("Purged %d old sent_jobs records", deleted)
 
-    all_jobs = fetch_all_jobs()
-    new_jobs = storage.filter_unsent(all_jobs)
-    log.info("Total jobs: %d, new (unsent): %d", len(all_jobs), len(new_jobs))
+    intern_jobs, fresher_jobs = fetch_all_jobs()
+    new_jobs = storage.filter_unsent(intern_jobs)
+    log.info(
+        "Thực tập: %d (mới %d) · fresher: %d",
+        len(intern_jobs), len(new_jobs), len(fresher_jobs),
+    )
+
+    today = date.today()
+
+    # Trang web luôn được sinh lại, kể cả khi không có tin mới, để mục fresher
+    # và số liệu theo ngày vẫn cập nhật.
+    site_url = webpage.build(intern_jobs, fresher_jobs, today)
 
     subscribers = storage.get_all_subscribers()
     if not subscribers:
         log.info("No subscribers, skipping send")
         return
 
-    today = date.today()
-
     if not new_jobs:
         # Không có tin mới — gửi thông báo ngắn thay vì im lặng.
         msg = (
             f"📋 <b>Cập nhật ngày {today.strftime('%d/%m/%Y')}</b>\n\n"
-            "😔 Hôm nay chưa có tin tuyển dụng intern IT mới ở Hà Nội.\n"
-            "Bot sẽ kiểm tra lại vào ngày mai."
+            "😔 Hôm nay chưa có tin thực tập mới ở Hà Nội.\n"
+            f"Trang thống kê vẫn có {len(fresher_jobs)} tin fresher để tham khảo."
         )
+        keyboard = make_site_keyboard(site_url, len(intern_jobs), len(fresher_jobs))
         for chat_id in subscribers:
             try:
                 await context.bot.send_message(
-                    chat_id=chat_id, text=msg, parse_mode="HTML"
+                    chat_id=chat_id, text=msg, parse_mode="HTML",
+                    reply_markup=keyboard,
                 )
             except Exception as exc:
                 log.warning("Failed to send to %s: %s", chat_id, exc)
@@ -164,8 +206,9 @@ async def send_daily(context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     summary = format_summary(new_jobs, today)
-    all_url = telegraph.create_page(new_jobs, today)
-    keyboard = make_top_keyboard(new_jobs, all_url=all_url)
+    keyboard = make_top_keyboard(
+        new_jobs, site_url=site_url, total=len(intern_jobs), fresher=len(fresher_jobs)
+    )
 
     log.info("Sending to %d subscribers", len(subscribers))
     for chat_id in subscribers:
@@ -212,20 +255,24 @@ async def cmd_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Lấy tin thủ công ngay lập tức."""
     await update.message.reply_text("⏳ Đang tìm kiếm job...")
 
-    jobs = fetch_all_jobs()
-    if not jobs:
-        await update.message.reply_text("😔 Không tìm thấy tin phù hợp.")
+    intern_jobs, fresher_jobs = fetch_all_jobs()
+    today = date.today()
+    site_url = webpage.build(intern_jobs, fresher_jobs, today)
+
+    if not intern_jobs:
+        await update.message.reply_text(
+            "😔 Hiện không có tin thực tập nào khớp yêu cầu.\n"
+            f"Trang thống kê có {len(fresher_jobs)} tin fresher để tham khảo.",
+            reply_markup=make_site_keyboard(site_url, 0, len(fresher_jobs)),
+        )
         return
 
-    today = date.today()
-    summary = format_summary(jobs, today)
-    all_url = telegraph.create_page(jobs, today)
-    keyboard = make_top_keyboard(jobs, all_url=all_url)
-
     await update.message.reply_text(
-        text=summary,
+        text=format_summary(intern_jobs, today),
         parse_mode="HTML",
-        reply_markup=keyboard,
+        reply_markup=make_top_keyboard(
+            intern_jobs, site_url=site_url, fresher=len(fresher_jobs)
+        ),
         disable_web_page_preview=True,
     )
 

@@ -1,46 +1,65 @@
-# Telegram Bot – Tin tuyển dụng Intern IT Hà Nội
+# Telegram Bot – Tin tuyển dụng Thực tập IT Hà Nội
 
-Bot tự động gửi tin tuyển dụng intern/fresher cho các vị trí **DevOps**, **Backend Java**, **Data Engineer** ở Hà Nội mỗi ngày. Kèm top 5 job tiềm năng nhất có nút bấm dẫn thẳng tới tin.
+Bot tự động gửi tin tuyển dụng **thực tập** (intern) cho các vị trí **DevOps**, **Backend Java**, **Data Engineer** ở Hà Nội mỗi sáng. Message gồm top 5 tin tiềm năng nhất có nút bấm dẫn thẳng tới bài tuyển dụng, kèm một nút mở trang thống kê xem toàn bộ tin của ngày.
+
+Chỉ tin **thực tập** được gửi qua Telegram. Tin **fresher/junior** vẫn được thu về nhưng chỉ liệt kê trên trang thống kê để tham khảo.
 
 ## Nguồn dữ liệu
-| Nguồn | Phương thức |
-|---|---|
-| **ITviec** | Scrape HTML (selectors ổn định) |
-| **VietnamWorks** | Public JSON API (phân trang) |
 
-## Cài đặt
+| Nguồn | Phương thức | Ghi chú |
+|---|---|---|
+| **ITviec** | Scrape HTML | Selector `div.job-card`, ổn định |
+| **VietnamWorks** | Public JSON API | `ms.vietnamworks.com/job-search`, lọc Hà Nội bằng `cityId=24` |
+| **Glints** | JSON trong `__NEXT_DATA__` | Bỏ qua filter địa điểm trên URL nên phải lọc Hà Nội ở `filters.py` |
+| **LinkedIn** | Endpoint `jobs-guest` | Không cần API/đăng nhập. Xem lưu ý bên dưới |
+
+Không dùng được: **TopDev** (chặn ở tầng TLS handshake), **TopCV** / **JobsGO** (Cloudflare 403), **Facebook** (tin thực tập IT nằm trong group kín, cần đăng nhập).
+
+### Lưu ý về LinkedIn
+- LinkedIn **tự nới lỏng** truy vấn nhiều từ: query `"devops intern"` bị hiểu thành `"devops"` nên trả về toàn tin Senior/Middle. Vì vậy chỉ hỏi LinkedIn theo **cấp bậc** (`intern`, `thực tập`...) rồi để `filters.py` lọc ngành.
+- Các filter `f_E` (cấp bậc) và `f_JT=I` (internship) bị endpoint guest **bỏ qua**; chỉ `f_TPR` (thời gian đăng) có tác dụng.
+- LinkedIn trả HTTP 429 quanh trang thứ 6. `LINKEDIN_PAGES=5` và `LINKEDIN_QUERY_DELAY` giữ cho an toàn; gặp 429 thì tự nghỉ `LINKEDIN_COOLDOWN` giây rồi thử lại.
+
+## Trang thống kê (GitHub Pages)
+
+Mỗi lần chạy, bot sinh trang tĩnh vào `docs/` rồi workflow commit lên repo. GitHub Pages phục vụ miễn phí tại URL cố định nên nút trong Telegram không bao giờ đổi.
+
+```
+docs/index.html               danh sách + thống kê ngày mới nhất
+docs/archive/YYYY-MM-DD.html  bản lưu từng ngày
+docs/data.json                số liệu theo ngày (vẽ biểu đồ xu hướng)
+```
+
+Bật một lần ở repo: **Settings → Pages → Source: Deploy from a branch → main / docs**.
+
+Nếu tên repo khác, đặt biến `PAGES_URL` cho khớp.
+
+## Deploy: GitHub Actions cron (miễn phí, không cần thẻ)
+
+Bot không cần server chạy 24/7. GitHub Actions chạy `run_once.py` mỗi sáng 8:00 giờ Việt Nam rồi tắt.
+
+1. Push code lên GitHub
+2. **Settings → Secrets and variables → Actions → New repository secret**:
+   - `BOT_TOKEN` – token từ [@BotFather](https://t.me/BotFather)
+   - `CHAT_IDS` – chat ID của bạn, lấy từ [@userinfobot](https://t.me/userinfobot). Nhiều người thì cách nhau bằng dấu phẩy: `123456789,987654321`
+3. **Settings → Pages → Source: main /docs**
+4. Test ngay: tab **Actions** → *Gửi tin tuyển dụng hàng ngày* → **Run workflow**
+
+Runner của GitHub Actions là ephemeral (xoá sạch sau mỗi lần chạy) nên `jobs.db` được commit ngược lại repo. Nhờ đó lịch sử "đã gửi" vẫn còn và mỗi sáng chỉ gửi tin **mới**.
+
+Đổi giờ gửi ở [.github/workflows/daily.yml](.github/workflows/daily.yml) — cron dùng **giờ UTC**, `'0 1 * * *'` là 08:00 ICT.
+
+## Chạy cục bộ
 
 ```bash
 pip install -r requirements.txt
+cp .env.example .env       # rồi điền BOT_TOKEN
+python bot.py              # chế độ polling, có lệnh /start /jobs /stop
 ```
 
-## Cấu hình
+Trên Windows, terminal mặc định dùng cp1252 và sẽ crash khi in tiếng Việt. Đặt `PYTHONIOENCODING=utf-8` trước khi chạy.
 
-```bash
-cp .env.example .env
-```
-
-Mở `.env` và điền:
-```env
-BOT_TOKEN=your_token_here   # Lấy từ @BotFather
-DAILY_HOUR=8                # Giờ gửi tin (7 giờ sáng)
-DAILY_MINUTE=0
-TOP_N=5                     # Số nút bấm job nổi bật
-MAX_AGE_DAYS=21             # Loại job cũ hơn 21 ngày
-```
-
-### Lấy BOT_TOKEN
-1. Mở Telegram, tìm **@BotFather**
-2. Gửi `/newbot`, đặt tên và username
-3. Sao chép token vào `.env`
-
-## Chạy bot
-
-```bash
-python bot.py
-```
-
-## Lệnh Telegram
+### Lệnh Telegram
 | Lệnh | Mô tả |
 |---|---|
 | `/start` | Đăng ký nhận tin hàng ngày |
@@ -51,43 +70,42 @@ python bot.py
 
 ```
 bot_tele/
-├── bot.py                  # Entry point, Telegram handlers + scheduler
-├── config.py               # Tất cả cấu hình (đọc từ .env)
-├── filters.py              # Logic lọc intern/HN + chấm điểm
-├── storage.py              # SQLite: lưu danh sách subscriber
+├── bot.py                  # Telegram handlers + scheduler (chế độ polling)
+├── run_once.py             # Chạy một lần — dùng cho GitHub Actions cron
+├── webpage.py              # Sinh trang tĩnh docs/ cho GitHub Pages
+├── config.py               # Toàn bộ cấu hình (đọc .env)
+├── filters.py              # Lọc cấp bậc/ngành/địa điểm + chấm điểm
+├── storage.py              # SQLite: subscriber + lịch sử đã gửi
 ├── sources/
 │   ├── base.py             # Kiểu Job + lớp BaseSource
-│   ├── itviec.py           # ITviec scraper
-│   └── vietnamworks.py     # VietnamWorks API scraper
-├── requirements.txt
-├── .env.example
-└── jobs.db                 # Tạo tự động khi chạy
+│   ├── itviec.py
+│   ├── vietnamworks.py
+│   ├── glints.py
+│   ├── linkedin.py
+│   ├── topdev.py           # Không dùng được (TLS block), giữ để tham khảo
+│   └── topcv.py            # Không dùng được (Cloudflare), giữ để tham khảo
+├── .github/workflows/daily.yml
+├── docs/                   # Trang GitHub Pages, sinh tự động
+└── jobs.db                 # Lịch sử đã gửi, commit theo repo
 ```
 
-## Chạy nền trên Windows
+## Cách lọc hoạt động
 
-Dùng Task Scheduler để tự khởi động khi login:
+Không nguồn nào cho filter "thực tập + Hà Nội + đúng ngành" ngay trên query, nên toàn bộ phần lọc thật nằm ở [filters.py](filters.py):
 
-1. Mở **Task Scheduler** → **Create Basic Task**
-2. Trigger: **When I log on**
-3. Action: **Start a program**
-   - Program: `python`
-   - Arguments: `d:\bot_tele\bot.py`
-   - Start in: `d:\bot_tele`
+1. **Cấp bậc** – `is_intern_level()` nhận `intern`/`thực tập`/`TTS`, loại thẳng tiêu đề có dấu hiệu senior. `is_fresher_level()` gom nhóm fresher/junior riêng cho trang web.
+2. **Ngành** – `detect_category()` khớp tiêu đề trước, rồi mới tới tag. `backend_java` yêu cầu từ khoá Java/Spring tường minh vì "backend" một mình quá chung (AI Engineer, .NET, Node.js đều mang tag đó).
+3. **Loại trừ** – `EXCLUDE_KEYWORDS` bỏ helpdesk, frontend, AI/ML, tester và các nghề ngoài phạm vi.
+4. **Địa điểm** – `is_in_hanoi()`, nhận cả tên quận và tin remote.
+5. **Chấm điểm** – tin mới, có chữ "intern" ngay tiêu đề, công khai lương, khớp nhiều từ khoá ngành thì điểm cao.
 
-Hoặc dùng `pm2` (nếu có Node.js):
-```bash
-npm install -g pm2
-pm2 start "python bot.py" --name telegram-job-bot --cwd d:\bot_tele
-pm2 save
-pm2 startup
-```
+Khớp theo **ranh giới từ** (regex lookaround), không phải substring: nếu không thì "java" khớp cả trong "javascript" và "hn" khớp trong "chuyen".
 
 ## Tuỳ chỉnh
 
 ### Thêm từ khoá ngành
-Mở [filters.py](filters.py) và thêm vào `CATEGORY_KEYWORDS`:
 ```python
+# filters.py
 "data_engineer": [
     "data engineer", ...,
     "mlops",           # thêm ở đây
@@ -95,10 +113,12 @@ Mở [filters.py](filters.py) và thêm vào `CATEGORY_KEYWORDS`:
 ```
 
 ### Thêm nguồn mới
-Tạo `sources/ten_nguon.py` kế thừa `BaseSource`, implement `fetch()` trả về `Iterable[Job]`. Thêm vào `sources/__init__.py` trong `ALL_SOURCES`.
+Tạo `sources/ten_nguon.py` kế thừa `BaseSource`, implement `fetch()` trả về `Iterable[Job]`, rồi thêm vào `ALL_SOURCES` trong `sources/__init__.py`.
 
-### Thay đổi giờ gửi
-```env
-DAILY_HOUR=7
-DAILY_MINUTE=30
-```
+Thứ tự nên thử khi khảo sát một nền tảng mới:
+1. **Endpoint JSON/guest nội bộ** — mở DevTools tab Network, lọc XHR, xem trang tự gọi API nào. Cho dữ liệu sạch nhất.
+2. **Scrape HTML trực tiếp** — được khi site render server-side và không có Cloudflare.
+3. **Search engine → URL → scrape** — chỉ khi 1 và 2 đều tắc. Google yêu cầu JS, Bing trả captcha; chỉ DuckDuckGo (`html.duckduckgo.com`) còn scrape được, nhưng kết quả toàn trang danh sách nên hiệu quả thấp.
+
+### Số tin ít thì làm sao
+Thị trường thực tập DevOps/Java/Data Engineer ở Hà Nội thực sự mỏng — khoảng 3-5 tin trên tổng ~500 tin gần đây từ 4 nguồn. Muốn nhiều hơn phải nới một trong ba điều kiện: nhận thêm fresher, mở rộng ngành, hoặc bỏ giới hạn Hà Nội.

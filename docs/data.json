@@ -1,0 +1,16 @@
+{
+  "2026-08-07": {
+    "intern": 3,
+    "fresher": 2,
+    "by_cat": {
+      "devops": 2,
+      "backend_java": 0,
+      "data_engineer": 1
+    },
+    "by_source": {
+      "Glints": 1,
+      "ITviec": 1,
+      "VietnamWorks": 1
+    }
+  }
+}

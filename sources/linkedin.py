@@ -25,9 +25,11 @@ from urllib.parse import urlparse, urlunparse
 from bs4 import BeautifulSoup
 
 from config import (
+    LINKEDIN_COOLDOWN,
     LINKEDIN_LOCATION,
     LINKEDIN_PAGES,
     LINKEDIN_QUERIES,
+    LINKEDIN_QUERY_DELAY,
     LINKEDIN_TPR,
     REQUEST_DELAY,
 )
@@ -36,6 +38,10 @@ from sources.base import BaseSource, Job
 log = logging.getLogger(__name__)
 
 API = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
+
+
+class _RateLimited(Exception):
+    """LinkedIn trả HTTP 429 — cần nghỉ rồi thử lại, không phải lỗi thật."""
 
 _EXTRA_HEADERS = {
     "Accept": "text/html,application/xhtml+xml",
@@ -86,11 +92,27 @@ class LinkedInSource(BaseSource):
         jobs: list[Job] = []
         seen_urls: set[str] = set()
 
-        for query in LINKEDIN_QUERIES:
+        for idx, query in enumerate(LINKEDIN_QUERIES):
+            # Nghỉ dài giữa hai truy vấn: LinkedIn tính hạn mức theo cụm
+            # request liên tiếp, nghỉ ngắn thì truy vấn sau bị 429 sạch.
+            if idx:
+                time.sleep(LINKEDIN_QUERY_DELAY)
+
             found = 0
             for page in range(LINKEDIN_PAGES):
                 try:
                     cards = self._fetch_page(query, page * 10)
+                except _RateLimited:
+                    # Bị chặn tốc độ: nghỉ dài rồi thử lại đúng trang đó một lần.
+                    log.info("LinkedIn nghỉ %ds vì HTTP 429", LINKEDIN_COOLDOWN)
+                    time.sleep(LINKEDIN_COOLDOWN)
+                    try:
+                        cards = self._fetch_page(query, page * 10)
+                    except Exception as exc:
+                        log.warning(
+                            "LinkedIn %r trang %d vẫn bị chặn: %s", query, page, exc
+                        )
+                        break
                 except Exception as exc:
                     log.warning("LinkedIn %r trang %d lỗi: %s", query, page, exc)
                     break
@@ -121,6 +143,9 @@ class LinkedInSource(BaseSource):
             "f_TPR": LINKEDIN_TPR,
         }
         resp = self.get(API, params=params)
+        if resp.status_code == 429:
+            # Để hàm gọi quyết định nghỉ rồi thử lại, thay vì bỏ luôn truy vấn.
+            raise _RateLimited(f"HTTP 429 tại start={start}")
         if resp.status_code != 200:
             log.warning("LinkedIn %r start=%d -> HTTP %s", query, start, resp.status_code)
             return []

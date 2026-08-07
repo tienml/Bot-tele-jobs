@@ -20,8 +20,13 @@ from telegram import Bot
 sys.path.insert(0, os.path.dirname(__file__))
 
 import storage
-import telegraph
-from bot import fetch_all_jobs, format_summary, make_top_keyboard
+import webpage
+from bot import (
+    fetch_all_jobs,
+    format_summary,
+    make_site_keyboard,
+    make_top_keyboard,
+)
 from config import BOT_TOKEN
 
 logging.basicConfig(
@@ -70,23 +75,36 @@ async def main() -> None:
     if deleted:
         log.info("Đã xoá %d bản ghi sent_jobs cũ", deleted)
 
-    all_jobs = fetch_all_jobs()
-    new_jobs = storage.filter_unsent(all_jobs)
-    log.info("Tổng job: %d, tin mới chưa gửi: %d", len(all_jobs), len(new_jobs))
+    intern_jobs, fresher_jobs = fetch_all_jobs()
+    new_jobs = storage.filter_unsent(intern_jobs)
+    log.info(
+        "Thực tập: %d (mới chưa gửi %d) · fresher: %d",
+        len(intern_jobs), len(new_jobs), len(fresher_jobs),
+    )
 
     today = date.today()
+
+    # Sinh trang web trước khi gửi, kể cả khi không có tin mới — mục fresher
+    # và số liệu theo ngày vẫn cần cập nhật. Bước sau trong workflow sẽ commit
+    # thư mục docs/ lên repo để GitHub Pages phục vụ.
+    site_url = webpage.build(intern_jobs, fresher_jobs, today)
 
     if not new_jobs:
         msg = (
             f"📋 <b>Cập nhật ngày {today.strftime('%d/%m/%Y')}</b>\n\n"
-            "😔 Hôm nay chưa có tin tuyển dụng intern IT mới ở Hà Nội.\n"
-            "Bot sẽ kiểm tra lại vào ngày mai."
+            "😔 Hôm nay chưa có tin thực tập mới ở Hà Nội.\n"
+            f"Trang thống kê có {len(intern_jobs)} tin thực tập và "
+            f"{len(fresher_jobs)} tin fresher để tham khảo."
         )
-        keyboard = None
+        keyboard = make_site_keyboard(site_url, len(intern_jobs), len(fresher_jobs))
     else:
         msg = format_summary(new_jobs, today)
-        all_url = telegraph.create_page(new_jobs, today)
-        keyboard = make_top_keyboard(new_jobs, all_url=all_url)
+        keyboard = make_top_keyboard(
+            new_jobs,
+            site_url=site_url,
+            total=len(intern_jobs),
+            fresher=len(fresher_jobs),
+        )
 
     sent_ok = False
     bot = Bot(token=BOT_TOKEN)
