@@ -40,9 +40,11 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Pull TRƯỚC khi commit: tránh conflict khi có code push vào repo
+          # giữa lúc workflow đang chạy (jobs.db là binary, không tự merge được).
+          git pull --rebase origin main
           # jobs.db giữ lịch sử "đã gửi"; docs/ là trang GitHub Pages.
           git add jobs.db docs
           # Chỉ commit nếu có thay đổi thật
           git diff --cached --quiet || git commit -m "chore: cập nhật tin tuyển dụng [skip ci]"
-          git pull --rebase origin main
           git push origin main
