@@ -816,6 +816,10 @@ def build(
     """
     from pathlib import Path
 
+    # Ưu tiên tham số truyền vào, fallback về PAGES_URL trong config.
+    # KHÔNG được trả về đường dẫn local — Telegram yêu cầu URL hợp lệ.
+    resolved_url = site_url or PAGES_URL
+
     out_dir = Path(SITE_DIR)
     archive_dir = out_dir / "archive"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -845,7 +849,7 @@ def build(
     # Render trang chính
     index_html = _render(
         jobs, fresher_jobs, today, new_ids, history, archives,
-        is_archive=False, site_url=site_url,
+        is_archive=False, site_url=resolved_url,
     )
     (out_dir / "index.html").write_text(index_html, encoding="utf-8")
     log.info("Đã ghi docs/index.html (%d jobs)", len(jobs))
@@ -853,9 +857,9 @@ def build(
     # Render trang lưu trữ ngày hôm nay
     archive_html = _render(
         jobs, fresher_jobs, today, new_ids, history, archives,
-        is_archive=True, site_url=site_url,
+        is_archive=True, site_url=resolved_url,
     )
     (archive_dir / f"{today_iso}.html").write_text(archive_html, encoding="utf-8")
     log.info("Đã ghi docs/archive/%s.html", today_iso)
 
-    return site_url or str(out_dir / "index.html")
+    return resolved_url
