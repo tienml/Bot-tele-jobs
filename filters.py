@@ -19,11 +19,12 @@ def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text.lower()).strip()
 
 
-# --- Cấp bậc: intern/fresher ---------------------------------------------
+# --- Cấp bậc: chỉ intern/thực tập ----------------------------------------
+# Không lấy fresher, trainee, mới tốt nghiệp — người dùng chỉ muốn thực tập.
 INTERN_KEYWORDS = [
     "intern", "internship", "thuc tap", "thuc tap sinh", "tts",
-    "fresher", "trainee", "sinh vien", "moi tot nghiep", "no experience",
-    "graduate program", "management trainee", "apprentice", "entry level",
+    "sinh vien",    # VietnamWorks ghi "Sinh viên" trong jobLevelVI
+    "entry level",  # Một số tin IT ghi "Entry Level"
 ]
 
 # Từ khoá loại thẳng: các tin senior lọt vào vì search "devops" trả cả tin cao cấp.
@@ -44,15 +45,24 @@ CATEGORY_KEYWORDS: dict[str, list[str]] = {
         "system engineer", "system admin", "linux engineer", "terraform",
         "van hanh he thong", "cloud ops",
     ],
+    # backend_java: chỉ nhận khi có từ khoá Java/Spring tường minh.
+    # Lý do: "backend" một mình quá chung — AI Engineer, .NET, Node.js đều
+    # dùng tag "backend" nên sẽ bị nhận nhầm nếu để từ khoá quá rộng.
     "backend_java": [
-        "java", "spring", "spring boot", "springboot", "backend", "back-end",
-        "back end", "j2ee", "jakarta", "microservice", "lap trinh vien backend",
-        "api developer", "server side",
+        "java", "spring", "spring boot", "springboot", "j2ee", "jakarta ee",
+        "java developer", "java engineer", "java backend", "java intern",
+        "lap trinh java",
     ],
     "data_engineer": [
         "data engineer", "data engineering", "etl", "elt", "data pipeline",
         "big data", "spark", "hadoop", "airflow", "data warehouse", "datawarehouse",
-        "data platform", "kafka", "dbt", "ky su du lieu", "data analyst engineer",
+        "data platform", "kafka", "dbt", "ky su du lieu",
+        # Một số intern ở VN dùng tên "data analyst" nhưng thực chất làm pipeline.
+        # "business intelligence" / "bi" cũng nằm giao với data engineering.
+        # Lưu ý: "data analysis" KHÔNG đưa vào — đó là skill tag xuất hiện
+        # trong hàng trăm tin tài chính/tư vấn không liên quan.
+        "data analyst", "analytics engineer", "business intelligence",
+        "phan tich du lieu",   # tiếng Việt: "phân tích dữ liệu" trong tiêu đề
     ],
 }
 
@@ -70,6 +80,9 @@ EXCLUDE_KEYWORDS = [
     # Frontend/mobile: hay có tag JavaScript nên dễ bị nhận nhầm là Java.
     "frontend", "front-end", "front end", "reactjs", "react native",
     "ui/ux", "designer", "thiet ke",
+    # AI/ML: khác với Data Engineer, không nằm trong 3 ngành mục tiêu.
+    "ai engineer", "machine learning", "ml engineer", "data scientist",
+    "nlp engineer", "computer vision", "artificial intelligence",
     # Nhóm nghề khác hẳn.
     "tester", "kiem thu", "business analyst", "marketing",
     "ke toan", "accounting", "nhan su", "tuyen dung", "bien tap",
@@ -115,7 +128,7 @@ def _contains(haystack: str, needles: list[str]) -> bool:
 
 
 def is_intern_level(job: Job) -> bool:
-    """Chỉ nhận tin intern/fresher, loại tin senior."""
+    """Chỉ nhận tin intern/thực tập sinh; loại tin senior và non-intern."""
     haystack = normalize(f"{job.title} {' '.join(job.tags)} {job.posted_text}")
     title_norm = normalize(job.title)
 
@@ -167,9 +180,7 @@ def score_job(job: Job, today: date | None = None) -> int:
     # Đúng từ khoá intern ngay ở tiêu đề là tín hiệu mạnh nhất.
     if _contains(title_norm, ["intern", "thuc tap", "internship", "tts"]):
         score += 40
-    elif _contains(title_norm, ["fresher", "trainee", "graduate"]):
-        score += 30
-    elif _contains(haystack, INTERN_KEYWORDS):
+    elif _contains(haystack, INTERN_KEYWORDS):  # sinh vien, entry level ở tag/level
         score += 15
 
     # Độ mới của tin.

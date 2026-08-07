@@ -55,6 +55,14 @@ ITVIEC_QUERIES = ["intern", "fresher", "devops", "java", "data-engineer"]
 VNW_QUERIES = ["intern", "thực tập", "devops", "java", "data engineer"]
 VNW_HITS_PER_PAGE = 100
 
+# --- Nguồn Glints --------------------------------------------------------
+# Glints bỏ qua filter địa điểm trên URL nên phải quét rộng rồi lọc Hà Nội
+# ở filters.py. Mỗi trang trả 20-30 tin, 3 trang là đủ phủ.
+GLINTS_QUERIES = [
+    "intern", "thực tập", "devops", "java", "data engineer", "backend",
+]
+GLINTS_PAGES = 3
+
 # cityId = 24 là Hà Nội (xác minh qua facet API).
 HANOI_CITY_ID = 24
 

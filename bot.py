@@ -22,6 +22,7 @@ from telegram.ext import (
 )
 
 import storage
+import telegraph
 from config import BOT_TOKEN, DAILY_HOUR, DAILY_MINUTE, MAX_AGE_DAYS, TIMEZONE, TOP_N
 from filters import CATEGORY_LABELS, filter_and_score
 from sources import ALL_SOURCES
@@ -106,9 +107,18 @@ def format_summary(jobs: list, today: date) -> str:
     return "\n".join(lines)
 
 
-def make_top_keyboard(top_jobs: list) -> InlineKeyboardMarkup:
-    """Tạo inline keyboard cho TOP_N job."""
+def make_top_keyboard(
+    top_jobs: list, all_url: str | None = None
+) -> InlineKeyboardMarkup:
+    """Tạo inline keyboard cho TOP_N job + nút xem tất cả (nếu có URL)."""
     buttons = []
+    # Nút "Xem tất cả" ở đầu nếu có trang Telegraph.
+    # top_jobs là danh sách ĐẦY ĐỦ đã sắp xếp, nên len() chính là tổng số tin.
+    if all_url:
+        buttons.append([InlineKeyboardButton(
+            text=f"📋 Xem tất cả {len(top_jobs)} tin hôm nay",
+            url=all_url,
+        )])
     for i, job in enumerate(top_jobs[:TOP_N], 1):
         title_short = job.title if len(job.title) <= 50 else job.title[:47] + "..."
         label = f"{i}. {title_short}"
@@ -154,7 +164,8 @@ async def send_daily(context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     summary = format_summary(new_jobs, today)
-    keyboard = make_top_keyboard(new_jobs)
+    all_url = telegraph.create_page(new_jobs, today)
+    keyboard = make_top_keyboard(new_jobs, all_url=all_url)
 
     log.info("Sending to %d subscribers", len(subscribers))
     for chat_id in subscribers:
@@ -208,7 +219,8 @@ async def cmd_jobs(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     today = date.today()
     summary = format_summary(jobs, today)
-    keyboard = make_top_keyboard(jobs)
+    all_url = telegraph.create_page(jobs, today)
+    keyboard = make_top_keyboard(jobs, all_url=all_url)
 
     await update.message.reply_text(
         text=summary,

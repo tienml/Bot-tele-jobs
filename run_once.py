@@ -20,6 +20,7 @@ from telegram import Bot
 sys.path.insert(0, os.path.dirname(__file__))
 
 import storage
+import telegraph
 from bot import fetch_all_jobs, format_summary, make_top_keyboard
 from config import BOT_TOKEN
 
@@ -84,7 +85,8 @@ async def main() -> None:
         keyboard = None
     else:
         msg = format_summary(new_jobs, today)
-        keyboard = make_top_keyboard(new_jobs)
+        all_url = telegraph.create_page(new_jobs, today)
+        keyboard = make_top_keyboard(new_jobs, all_url=all_url)
 
     sent_ok = False
     bot = Bot(token=BOT_TOKEN)

@@ -1,6 +1,19 @@
+# Bytecode
 __pycache__/
-*.py[cod]
+*.pyc
 *.pyo
+
+# Môi trường ảo
+.venv/
+venv/
+env/
+
+# Biến môi trường cục bộ (không push token lên git)
 .env
-*.log
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
 .DS_Store
