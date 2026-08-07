@@ -253,7 +253,11 @@ def _collect(jobs: list[Job], level_ok, today: date) -> list[Job]:
             continue
         if is_excluded(job):
             continue
-        category = detect_category(job)
+        # Ưu tiên detect_category (khớp keyword từ tiêu đề/tag).
+        # Fallback sang job.category nếu scraper đã gán sẵn (ví dụ TopCV
+        # gán theo URL query) — tránh drop job chỉ vì tiêu đề không có
+        # keyword ngành (vd. "AI Automation Specialist" từ URL devops).
+        category = detect_category(job) or job.category or None
         if not category:
             continue
 

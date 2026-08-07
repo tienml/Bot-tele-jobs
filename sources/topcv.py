@@ -156,7 +156,10 @@ def _parse_card(card, category: str) -> Job | None:
         source="TopCV",
         location=location,
         salary=salary,
-        tags=[],
+        # URL TopCV đã filter exp=1,2 (không yêu cầu kinh nghiệm + dưới 1 năm)
+        # nên tất cả job đều là entry-level. Thêm tag để bộ lọc intern/fresher
+        # trong filters.py nhận ra được (FRESHER_KEYWORDS có "khong yeu cau kinh nghiem").
+        tags=["Không yêu cầu kinh nghiệm"],
         posted_text=posted_text,
         posted_date=posted_date,
         category=category,
