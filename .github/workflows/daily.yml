@@ -1,0 +1,32 @@
+name: Gửi tin tuyển dụng hàng ngày
+
+on:
+  schedule:
+    # 8:00 sáng giờ Việt Nam = 1:00 UTC
+    - cron: '0 1 * * *'
+  # Cho phép chạy thủ công để test
+  workflow_dispatch:
+
+jobs:
+  send-jobs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cài Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Cài dependencies
+        run: pip install -r requirements.txt
+
+      - name: Gửi tin tuyển dụng
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_IDS: ${{ secrets.CHAT_IDS }}
+          PYTHONIOENCODING: utf-8
+        run: python run_once.py
