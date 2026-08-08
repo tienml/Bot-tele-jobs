@@ -202,10 +202,16 @@ def _fetch_playwright(url: str) -> str | None:
                     timezone_id="Asia/Ho_Chi_Minh",
                 )
                 page = ctx.new_page()
-                page.goto(url, wait_until="domcontentloaded", timeout=30_000)
+                resp = page.goto(url, wait_until="domcontentloaded", timeout=30_000)
                 # Đợi 2s để JS challenge (nếu có) resolve xong
                 page.wait_for_timeout(2_000)
                 html = page.content()
+                status = resp.status if resp else "?"
+                title = page.title()
+                log.info(
+                    "TopCV Playwright: HTTP %s | title=%r | html_len=%d",
+                    status, title, len(html),
+                )
                 browser.close()
                 return html
         except Exception as exc:
@@ -228,8 +234,16 @@ def _fetch_playwright(url: str) -> str | None:
 def _parse_html(html: str, category: str) -> list[Job]:
     """Tách các tin từ HTML trang tìm kiếm TopCV."""
     soup = BeautifulSoup(html, "lxml")
+    cards = soup.select("div.job-item-search-result")
+    if not cards:
+        title = soup.title.string.strip() if soup.title and soup.title.string else "?"
+        log.warning(
+            "TopCV %s: 0 card tìm thấy — page title=%r"
+            " (Cloudflare block page hoặc HTML structure thay đổi)",
+            category, title,
+        )
     jobs: list[Job] = []
-    for card in soup.select("div.job-item-search-result"):
+    for card in cards:
         try:
             job = _parse_card(card, category)
         except Exception:
