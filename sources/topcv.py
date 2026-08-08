@@ -223,6 +223,9 @@ def _fetch_playwright(url: str) -> str | None:
         except Exception as exc:
             log.warning("TopCV Playwright thread lỗi: %s", exc)
             return None
+
+
+def _parse_html(html: str, category: str) -> list[Job]:
     """Tách các tin từ HTML trang tìm kiếm TopCV."""
     soup = BeautifulSoup(html, "lxml")
     jobs: list[Job] = []
