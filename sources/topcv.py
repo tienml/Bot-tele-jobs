@@ -19,11 +19,12 @@ Cấu trúc HTML mỗi tin (div.job-item-search-result):
 from __future__ import annotations
 
 import logging
+import os
 import re
 import time
 from datetime import date, timedelta
 from typing import Iterable
-from urllib.parse import urlsplit
+from urllib.parse import quote_plus, urlsplit
 
 from bs4 import BeautifulSoup
 
@@ -50,6 +51,11 @@ BASE = "https://www.topcv.vn"
 
 # Giả lập TLS Chrome — cùng giá trị với ITviec để dễ đồng bộ nếu cần đổi.
 _IMPERSONATE = "chrome124"
+
+# ScraperAPI residential proxy — bypass Cloudflare IP-reputation block.
+# Miễn phí 1000 req/tháng tại scraperapi.com (bot dùng ~90 req/tháng).
+# Đặt secret SCRAPER_API_KEY trong GitHub Actions để bật fallback này.
+_SCRAPER_API_KEY = os.environ.get("SCRAPER_API_KEY", "")
 
 # exp=1,2 bao gồm cả fresher (exp=1) lẫn dưới 1 năm kinh nghiệm (exp=2).
 _QUERIES: dict[str, str] = {
@@ -174,6 +180,32 @@ def _parse_card(card, category: str) -> Job | None:
     )
 
 
+def _fetch_scraperapi(url: str, api_key: str) -> str | None:
+    """Fetch qua ScraperAPI residential proxy — bypass Cloudflare IP-reputation block.
+
+    ScraperAPI route request qua IP residential ngẫu nhiên, Cloudflare không thể
+    phân biệt với người dùng thật. render=false vì TopCV server-side render đủ.
+    Free tier: 1000 req/tháng — đủ cho bot (~90 req/tháng).
+    """
+    api_url = (
+        "https://api.scraperapi.com"
+        f"?api_key={api_key}"
+        f"&url={quote_plus(url)}"
+        "&render=false"
+        "&country_code=vn"
+    )
+    try:
+        resp = curl_requests.get(api_url, timeout=HTTP_TIMEOUT + 30)
+        if resp.status_code == 200:
+            log.info("TopCV ScraperAPI: OK (len=%d)", len(resp.text))
+            return resp.text
+        log.warning("TopCV ScraperAPI: HTTP %s", resp.status_code)
+        return None
+    except Exception as exc:
+        log.warning("TopCV ScraperAPI lỗi: %s", exc)
+        return None
+
+
 def _fetch_playwright(url: str) -> str | None:
     """Dùng Playwright headless Chromium để bypass Cloudflare JS challenge.
 
@@ -291,7 +323,14 @@ class TopCVSource(BaseSource):
             except Exception as exc:
                 log.warning("TopCV %s: lỗi kết nối curl_cffi (%s)", category, exc)
 
-            # Bước 2: fallback Playwright khi curl_cffi bị 403 (Cloudflare JS challenge)
+            # Bước 2: ScraperAPI residential proxy — bypass Cloudflare IP-reputation block
+            # (curl_cffi dùng Azure IP bị block; ScraperAPI dùng IP residential ngẫu nhiên)
+            if html is None and _SCRAPER_API_KEY:
+                log.info("TopCV %s: thử ScraperAPI...", category)
+                html = _fetch_scraperapi(url, _SCRAPER_API_KEY)
+
+            # Bước 3: Playwright (bypass JS challenge, không bypass IP-reputation block)
+            # Chỉ có tác dụng nếu vấn đề là JS challenge, không phải IP block.
             if html is None and _PLAYWRIGHT_OK:
                 log.info("TopCV %s: thử Playwright...", category)
                 html = _fetch_playwright(url)
