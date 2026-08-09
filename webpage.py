@@ -37,6 +37,7 @@ SOURCE_COLORS = {
     "VietnamWorks": "#3b9eff",
     "Glints":       "#00c896",
     "LinkedIn":     "#7b8bff",
+    "TopCV":        "#00b14f",
 }
 
 # Gradient nền cho từng nhóm nghề — dùng trong icon box
@@ -45,6 +46,9 @@ CAT_GRADIENTS = {
     "backend_java": "linear-gradient(135deg,#8b5cf6,#7c3aed)",
     "data_engineer":"linear-gradient(135deg,#06b6d4,#0891b2)",
 }
+
+# Nhóm fresher dùng màu amber, trùng với tab lọc và viền card fresher.
+FRESHER_GRADIENT = "linear-gradient(135deg,#fbbf24,#f59e0b)"
 
 _CSS = """
 /* ── Reset & base ─────────────────────────────────────────── */
@@ -224,15 +228,12 @@ h1 {
   color: var(--text-3); white-space: nowrap;
 }
 
-/* ── Layout 2 cột ──────────────────────────────────────────── */
-.two-col {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 16px;
-  align-items: start;
-}
-.col-left { display: flex; flex-direction: column; gap: 12px; }
-.col-right { min-width: 0; }
+/* ── Layout một cột ────────────────────────────────────────────
+   Trước đây dùng grid 300px + 1fr với khối fresher nhét trong cột
+   300px. Card fresher trong cột hẹp bị wrap cao gấp đôi, nên chỉ cần
+   hơn chục tin là cột trái dài hơn cột phải và trang mất cân. Giờ mọi
+   danh sách nằm trong một cột rộng, biểu đồ trải ngang phía trên. */
+.list-wrap { min-width: 0; }
 
 /* ── Category heading ─────────────────────────────────────── */
 .cat-head {
@@ -275,9 +276,30 @@ h1 {
   background: var(--text); color: var(--bg);
   border-color: var(--text);
 }
-#f-devops:checked ~ .filter-wrap .cats .cat:not([data-cat="devops"]),
-#f-java:checked   ~ .filter-wrap .cats .cat:not([data-cat="backend_java"]),
-#f-data:checked   ~ .filter-wrap .cats .cat:not([data-cat="data_engineer"])
+/* Tab fresher dùng màu amber để phân biệt với 3 tab ngành. Pha màu từ
+   var(--amber) thay vì hardcode, để dark mode tự đổi theo (--amber sáng
+   hơn ở dark mode). */
+.filter-tabs label.tab-fresher {
+  color: var(--amber);
+  color: color-mix(in srgb, var(--amber) 75%, var(--text));
+  border-color: var(--border);
+  border-color: color-mix(in srgb, var(--amber) 45%, transparent);
+}
+.filter-tabs label.tab-fresher:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+#f-fresher:checked ~ .filter-wrap label[for="f-fresher"] {
+  background: var(--amber); border-color: var(--amber);
+  color: #1c1200;   /* amber là màu sáng ở cả 2 theme → chữ tối luôn đọc được */
+}
+/* Ẩn nhóm không được chọn. Ba tab ngành đã tự loại fresher qua :not(),
+   chỉ cần thêm một dòng cho tab "Tất cả" để nó chỉ hiện tin thực tập. */
+#f-devops:checked  ~ .filter-wrap .cats .cat:not([data-cat="devops"]),
+#f-java:checked    ~ .filter-wrap .cats .cat:not([data-cat="backend_java"]),
+#f-data:checked    ~ .filter-wrap .cats .cat:not([data-cat="data_engineer"]),
+#f-fresher:checked ~ .filter-wrap .cats .cat:not([data-cat="fresher"]),
+#f-all:checked     ~ .filter-wrap .cats .cat[data-cat="fresher"]
   { display: none; }
 
 /* ── Job card ──────────────────────────────────────────────── */
@@ -340,7 +362,16 @@ h1 {
   background: rgba(255,179,71,.07);
 }
 .tag.src-tag { font-weight: 600; color: var(--text-2); }
-.job-card.fresher { --stripe: var(--amber); }
+/* Card fresher: nền pha nhẹ sắc amber lên trên var(--card) nên hoạt động ở
+   cả light và dark mode. Màu vạch bên trái set inline trong _job_html(). */
+.job-card.fresher {
+  background: var(--card);   /* fallback nếu trình duyệt chưa có color-mix */
+  background: color-mix(in srgb, var(--amber) 6%, var(--card));
+}
+.job-card.fresher:hover {
+  background: var(--card-h);
+  background: color-mix(in srgb, var(--amber) 11%, var(--card-h));
+}
 
 /* ── Chart ─────────────────────────────────────────────────── */
 .chart-card {
@@ -350,21 +381,16 @@ h1 {
   padding: 20px 20px 14px;
   box-shadow: 0 1px 4px rgba(0,0,0,.05);
 }
-.chart-title {
-  font-size: 12px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .1em;
-  color: var(--text-3); margin-bottom: 16px;
-}
 .chart {
   display: flex; align-items: flex-end;
-  gap: 5px; height: 100px;
+  gap: 6px; height: 120px;
 }
 .chart-col {
   flex: 1; display: flex; flex-direction: column;
   justify-content: flex-end; align-items: center; gap: 4px;
 }
 .chart-val {
-  font-size: 10px; color: var(--text-3);
+  font-size: 11px; color: var(--text-3); font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 .chart-bar {
@@ -378,7 +404,7 @@ h1 {
 .chart-col.today .chart-bar { background: var(--brand); opacity: 1; }
 .chart-col.zero .chart-bar { background: var(--border); opacity: 1; }
 .chart-x {
-  display: flex; gap: 5px; margin-top: 8px;
+  display: flex; gap: 6px; margin-top: 8px;
 }
 .chart-x div {
   flex: 1; text-align: center;
@@ -386,32 +412,7 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Fresher fold ─────────────────────────────────────────── */
-details.fresher-fold {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--r); overflow: hidden;
-}
-details.fresher-fold > summary {
-  list-style: none; cursor: pointer;
-  display: flex; align-items: center; gap: 10px;
-  padding: 15px 18px;
-  font-size: 14.5px; font-weight: 700;
-  transition: background .15s;
-}
-details.fresher-fold > summary:hover { background: var(--card-h); }
-details.fresher-fold > summary::-webkit-details-marker { display: none; }
-.fold-arrow {
-  width: 20px; height: 20px;
-  border-radius: 6px;
-  display: grid; place-items: center;
-  font-size: 12px; color: var(--text-3);
-  background: var(--surface); border: 1px solid var(--border);
-  transition: transform .2s ease;
-  flex-shrink: 0;
-}
-details.fresher-fold[open] .fold-arrow { transform: rotate(90deg); }
-.fresher-inner { padding: 0 18px 18px; }
+/* ── Ghi chú nhóm fresher ─────────────────────────────────── */
 .fresher-note {
   font-size: 13px; color: var(--text-3);
   background: var(--surface); border-radius: var(--r-sm);
@@ -450,13 +451,7 @@ footer {
   color: var(--text-3); font-size: 12.5px;
 }
 
-/* ── Fresher section label ─────────────────────────────────── */
-.fresher-wrap { margin-top: 4px; }
-
 /* ── Mobile ────────────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .two-col { grid-template-columns: 1fr; }
-}
 @media (max-width: 600px) {
   .stats { grid-template-columns: repeat(2, 1fr); }
   .stat-val { font-size: 26px; }
@@ -500,6 +495,11 @@ def _job_html(job, today: date, is_new: bool = False, is_fresher: bool = False) 
     age = _age_label(job.posted_date, today)
     color = _source_color(job.source)
     fresher_cls = " fresher" if is_fresher else ""
+    # Vạch màu bên trái: card fresher dùng amber cho khớp tab và icon nhóm.
+    # Phải quyết định ở đây vì `--stripe` được set inline, nên rule CSS
+    # `.job-card.fresher { --stripe: ... }` không bao giờ thắng được.
+    # Dùng var(--amber) để dark mode tự đổi theo.
+    stripe = "var(--amber)" if is_fresher else color
 
     tags_html = ""
     if is_new:
@@ -514,7 +514,7 @@ def _job_html(job, today: date, is_new: bool = False, is_fresher: bool = False) 
 
     return (
         f'<a class="job-card{fresher_cls}" href="{_esc(job.url)}" target="_blank" rel="noopener"'
-        f' style="--stripe:{color}">'
+        f' style="--stripe:{stripe}">'
         f'<div class="job-title">{_esc(job.title)}</div>'
         f'<div class="job-company">'
         f'<span>{_esc(job.company)}</span>'
@@ -548,6 +548,31 @@ def _section(cat: str, jobs: list, today: date, new_ids: set[str] | None) -> str
         f'<span class="cat-name">{_esc(label)}</span>'
         f'<span class="badge-count">{len(jobs)} tin</span>'
         f'</div>'
+        f'{cards}'
+        f'</div>'
+    )
+
+
+def _fresher_section(fresher_jobs: list, today: date) -> str:
+    """Nhóm fresher — cùng khuôn .cat như 3 nhóm ngành để tab lọc dùng chung.
+
+    Card fresher không gắn nhãn 🆕: nhóm này không gửi qua Telegram nên không
+    có khái niệm "đã gửi hay chưa".
+    """
+    if not fresher_jobs:
+        return ""
+    cards = "".join(_job_html(j, today, is_fresher=True) for j in fresher_jobs)
+    return (
+        f'<div class="cat" data-cat="fresher">'
+        f'<div class="cat-head">'
+        f'<div class="cat-icon" style="background:{FRESHER_GRADIENT}">🌱</div>'
+        f'<span class="cat-name">Fresher / Junior</span>'
+        f'<span class="badge-count">{len(fresher_jobs)} tin</span>'
+        f'</div>'
+        f'<p class="fresher-note">'
+        f'Nhóm tham khảo, không gửi qua Telegram. Các tin này yêu cầu 0 năm '
+        f'kinh nghiệm hoặc ghi rõ "fresher welcome".'
+        f'</p>'
         f'{cards}'
         f'</div>'
     )
@@ -640,10 +665,11 @@ def _trend_html(history: list[dict], today_count: int, today: date) -> str:
         lbl = str(d.day) if (i % 3 == 0 or d == today) else ""
         labels += f'<div>{lbl}</div>'
 
+    # Không lặp lại tiêu đề "Xu hướng 14 ngày" ở đây — _render() đã đặt nó
+    # trong .sec-head ngay phía trên. Chart giờ trải ngang nên cao hơn trước.
     return (
         f'<div class="chart-card">'
-        f'<div class="chart-title">📈 Xu hướng 14 ngày</div>'
-        f'<div class="chart" style="height:100px">{bars}</div>'
+        f'<div class="chart" style="height:120px">{bars}</div>'
         f'<div class="chart-x">{labels}</div>'
         f'</div>'
     )
@@ -651,22 +677,34 @@ def _trend_html(history: list[dict], today_count: int, today: date) -> str:
 
 # ── Filter tabs (CSS-only, không JS) ─────────────────────────────────────────
 
-def _filters_html(by_cat: dict[str, int]) -> str:
+def _filters_html(by_cat: dict[str, int], fresher_count: int = 0) -> str:
+    """Tab lọc CSS-only. Fresher là tab thứ 5, không còn khối fold riêng.
+
+    Gộp fresher vào đây thay vì để trong <details> ở cột trái: cột trái chỉ
+    rộng 300px nên card fresher bị wrap cao gấp đôi, nhiều tin là cột trái dài
+    hơn hẳn cột phải.
+    """
     total = sum(by_cat.values())
-    tabs = (
+    fresher_tab = (
+        f'<label class="tab-fresher" for="f-fresher">'
+        f'🌱 Fresher <strong>{fresher_count}</strong></label>'
+        if fresher_count else ''
+    )
+    return (
         f'<input type="radio" name="fcat" id="f-all" checked>'
         f'<input type="radio" name="fcat" id="f-devops">'
         f'<input type="radio" name="fcat" id="f-java">'
         f'<input type="radio" name="fcat" id="f-data">'
+        f'<input type="radio" name="fcat" id="f-fresher">'
         f'<div class="filter-wrap">'
         f'<div class="filter-tabs">'
         f'<label for="f-all">Tất cả <strong>{total}</strong></label>'
         f'<label for="f-devops">🛠 DevOps <strong>{by_cat.get("devops",0)}</strong></label>'
         f'<label for="f-java">☕ Java <strong>{by_cat.get("backend_java",0)}</strong></label>'
         f'<label for="f-data">📊 Data <strong>{by_cat.get("data_engineer",0)}</strong></label>'
+        f'{fresher_tab}'
         f'</div>'
     )
-    return tabs
 
 
 # ── Render trang chính ────────────────────────────────────────────────────────
@@ -741,12 +779,14 @@ def _render(
         yesterday_total=yesterday_total,
     )
 
-    # ── Filter tabs + job sections
-    filter_html = _filters_html(by_cat)
+    # ── Filter tabs + job sections. Fresher là một nhóm .cat như 3 ngành,
+    # hiện ra khi chọn tab của nó, nên không cần khối fold riêng nữa.
+    filter_html = _filters_html(by_cat, len(fresher_jobs))
     cats_html = ""
     for cat in CATEGORY_ORDER:
         cat_jobs = [j for j in jobs if j.category == cat]
         cats_html += _section(cat, cat_jobs, today, new_ids)
+    cats_html += _fresher_section(fresher_jobs, today)
 
     sections_block = (
         f'{filter_html}'
@@ -756,26 +796,7 @@ def _render(
         f'</div>'  # đóng .filter-wrap
     )
 
-    # ── Fresher fold
-    fresher_html = ""
-    if fresher_jobs:
-        f_cards = "".join(_job_html(j, today, is_fresher=True) for j in fresher_jobs)
-        fresher_html = (
-            f'<details class="fresher-fold">'
-            f'<summary>'
-            f'<span class="fold-arrow">▶</span>'
-            f'🌱 Fresher ({len(fresher_jobs)} tin) — Không yêu cầu kinh nghiệm'
-            f'</summary>'
-            f'<div class="fresher-inner">'
-            f'<p class="fresher-note">'
-            f'Các tin này yêu cầu 0 năm kinh nghiệm hoặc ghi rõ "fresher welcome".'
-            f'</p>'
-            f'{f_cards}'
-            f'</div>'
-            f'</details>'
-        )
-
-    # ── Trend chart (chỉ trang chính) — nằm cột trái trong layout 2 cột
+    # ── Trend chart (chỉ trang chính) — trải ngang phía trên danh sách
     trend_html = ""
     if not is_archive:
         trend_html = _trend_html(history, len(jobs), today)
@@ -796,50 +817,26 @@ def _render(
             f'<div class="arch-grid">{links}</div>'
         )
 
-    # ── Layout 2 cột: trái = biểu đồ + fresher; phải = danh sách jobs
-    if trend_html:
-        col_left = (
-            f'<div class="col-left">'
-            f'<div class="sec-head">'
-            f'<div class="sec-head-line"></div>'
-            f'<div class="sec-title">📈 Xu hướng 14 ngày</div>'
-            f'<div class="sec-head-line"></div>'
-            f'</div>'
-            f'{trend_html}'
-            + (f'<div class="sec-head">'
-               f'<div class="sec-head-line"></div>'
-               f'<div class="sec-title">🌱 Fresher</div>'
-               f'<div class="sec-head-line"></div>'
-               f'</div>'
-               f'<div class="fresher-wrap">{fresher_html}</div>' if fresher_html else '')
-            + f'</div>'
-        )
-        col_right = (
-            f'<div class="col-right">'
-            f'<div class="sec-head">'
-            f'<div class="sec-head-line"></div>'
-            f'<div class="sec-title">💼 Danh sách tin</div>'
-            f'<div class="sec-head-line"></div>'
-            f'</div>'
-            f'{sections_block}'
-            f'</div>'
-        )
-        main_content = f'<div class="two-col">{col_left}{col_right}</div>'
-    else:
-        # Trang archive: layout đơn cột
-        main_content = (
-            f'<div class="sec-head">'
-            f'<div class="sec-head-line"></div>'
-            f'<div class="sec-title">💼 Danh sách tin</div>'
-            f'<div class="sec-head-line"></div>'
-            f'</div>'
-            f'{sections_block}'
-            + (f'<div class="sec-head">'
-               f'<div class="sec-head-line"></div>'
-               f'<div class="sec-title">🌱 Fresher</div>'
-               f'<div class="sec-head-line"></div>'
-               f'</div>{fresher_html}' if fresher_html else '')
-        )
+    # ── Layout một cột: biểu đồ trải ngang, rồi tab lọc + danh sách.
+    # Trang archive không có biểu đồ nên chỉ thiếu phần trend, phần còn lại
+    # dùng chung khuôn với trang chính.
+    chart_block = (
+        f'<div class="sec-head">'
+        f'<div class="sec-head-line"></div>'
+        f'<div class="sec-title">📈 Xu hướng 14 ngày</div>'
+        f'<div class="sec-head-line"></div>'
+        f'</div>'
+        f'{trend_html}' if trend_html else ''
+    )
+    main_content = (
+        f'{chart_block}'
+        f'<div class="sec-head">'
+        f'<div class="sec-head-line"></div>'
+        f'<div class="sec-title">💼 Danh sách tin</div>'
+        f'<div class="sec-head-line"></div>'
+        f'</div>'
+        f'<div class="list-wrap">{sections_block}</div>'
+    )
 
     body = (
         f'{header_html}'

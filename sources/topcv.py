@@ -2,7 +2,14 @@
 
 TopCV đứng sau Cloudflare và chặn IP datacenter GitHub Actions. TLS giả lập
 Chrome (curl_cffi impersonate='chrome124') bypass được: server trả HTML
-server-side render đầy đủ, không cần JavaScript. Mỗi URL tìm kiếm cho ~4 tin.
+server-side render đầy đủ, không cần JavaScript.
+
+Nguồn này chạy HAI bộ query riêng (xem _INTERN_QUERIES / _FRESHER_QUERIES):
+lọc cấp bậc `position=50` cho tin thực tập và lọc kinh nghiệm `exp=1,2` cho
+tin fresher. Trước đây chỉ có exp=1,2 nên gần như chỉ ra fresher — 12 tin thô
+mà chỉ 2 tin là thực tập.
+
+Không phân trang được: thêm `&page=2` thì Cloudflare trả 403.
 
 Jina reader bị TopCV block ở tầng Cloudflare (403) nên không có fallback.
 Nếu curl_cffi không cài, nguồn này bỏ qua hoàn toàn.
@@ -57,26 +64,50 @@ _IMPERSONATE = "chrome124"
 # Đặt secret SCRAPER_API_KEY trong GitHub Actions để bật fallback này.
 _SCRAPER_API_KEY = os.environ.get("SCRAPER_API_KEY", "")
 
-# exp=1,2 bao gồm cả fresher (exp=1) lẫn dưới 1 năm kinh nghiệm (exp=2).
-_QUERIES: dict[str, str] = {
-    "devops": (
-        BASE + "/tim-viec-lam-devops-tai-ha-noi-kl1"
-        "?exp=1,2&type_keyword=1&sba=1&locations=l1"
-    ),
-    "data_engineer": (
-        BASE + "/tim-viec-lam-data-engineer-tai-ha-noi-kl1"
-        "?exp=1,2&type_keyword=1&sba=1&locations=l1"
-    ),
-    "backend_java": (
-        BASE + "/tim-viec-lam-java-tai-ha-noi-kl1"
-        "?exp=1,2&type_keyword=1&sba=1&locations=l1"
-    ),
-}
+# --- Hai bộ query, hai mục đích khác nhau --------------------------------
+#
+# TopCV có hai tham số lọc dễ nhầm lẫn, đã dò trực tiếp từ form filter:
+#   exp=1,2       → KINH NGHIỆM: "không yêu cầu" + "dưới 1 năm". Đây là lọc
+#                   FRESHER, không phải thực tập. Mỗi query trả 3-4 tin nên
+#                   tin intern thật dễ bị đẩy khỏi trang.
+#   position=50   → CẤP BẬC "Thực tập sinh". Đây mới là lọc intern thật.
+#   type=5        → "Thực tập" (hình thức làm việc) nhưng server BỎ QUA
+#                   tham số này: trả nguyên 50 tin gồm cả Senior/Trưởng nhóm.
+#
+# Nên dùng position=50 cho intern. Với slug hẹp theo ngành, nó chính xác
+# tuyệt đối nhưng rất ít tin (data_engineer/backend_java ra 0). Vì vậy thêm
+# slug rộng ("it", "data") để bắt tin mà slug hẹp bỏ sót — phần lọc ngành
+# đã do detect_category() trong filters.py đảm nhiệm.
+_INTERN_PARAMS = "position=50&type_keyword=1&sba=1&locations=l1"
+_FRESHER_PARAMS = "exp=1,2&type_keyword=1&sba=1&locations=l1"
+
+# Query intern (position=50). `category` để rỗng với slug rộng: không suy ra
+# được ngành từ slug nên để detect_category() tự khớp theo tiêu đề/tag.
+_INTERN_QUERIES: list[tuple[str, str, str]] = [
+    ("devops", "devops", f"{BASE}/tim-viec-lam-devops-tai-ha-noi-kl1?{_INTERN_PARAMS}"),
+    ("data_engineer", "data_engineer",
+     f"{BASE}/tim-viec-lam-data-engineer-tai-ha-noi-kl1?{_INTERN_PARAMS}"),
+    ("backend_java", "java", f"{BASE}/tim-viec-lam-java-tai-ha-noi-kl1?{_INTERN_PARAMS}"),
+    ("", "rộng:it", f"{BASE}/tim-viec-lam-it-tai-ha-noi-kl1?{_INTERN_PARAMS}"),
+    ("", "rộng:data", f"{BASE}/tim-viec-lam-data-tai-ha-noi-kl1?{_INTERN_PARAMS}"),
+]
+
+# Query fresher (exp=1,2) — giữ nguyên như trước, nhóm này chỉ hiện trên web.
+_FRESHER_QUERIES: list[tuple[str, str, str]] = [
+    ("devops", "devops", f"{BASE}/tim-viec-lam-devops-tai-ha-noi-kl1?{_FRESHER_PARAMS}"),
+    ("data_engineer", "data_engineer",
+     f"{BASE}/tim-viec-lam-data-engineer-tai-ha-noi-kl1?{_FRESHER_PARAMS}"),
+    ("backend_java", "java", f"{BASE}/tim-viec-lam-java-tai-ha-noi-kl1?{_FRESHER_PARAMS}"),
+]
 
 # "Đăng 5 ngày trước", "Đăng1 tuần trước", "Đăng 2 tháng trước"
 # TopCV đôi khi không chèn khoảng trắng giữa "Đăng" và số → \s*
 _POSTED_RE = re.compile(r"Đăng\s*(\d+)\s*(giờ|ngày|tuần|tháng)\s*trước", re.I)
 _CLEAN_RE = re.compile(r"\s+")
+
+# Title trang khi TopCV không có tin nào khớp: "Tuyển dụng 0 việc làm ...".
+# Dùng để phân biệt kết quả rỗng hợp lệ với trang bị Cloudflare chặn.
+_ZERO_RESULT_RE = re.compile(r"tuyển dụng\s+0\s+việc làm", re.I)
 
 
 def _clean(text: str) -> str:
@@ -106,8 +137,12 @@ def _parse_posted(text: str) -> tuple[str, date | None]:
     return _clean(m.group(0)), date.today() - timedelta(days=days)
 
 
-def _parse_card(card, category: str) -> Job | None:
-    """Parse một div.job-item-search-result từ HTML trang tìm kiếm TopCV."""
+def _parse_card(card, category: str, level_tag: str = "Không yêu cầu kinh nghiệm") -> Job | None:
+    """Parse một div.job-item-search-result từ HTML trang tìm kiếm TopCV.
+
+    `level_tag` là tag cấp bậc suy ra từ tham số URL đã dùng — card HTML không
+    ghi cấp bậc nên phải gán từ query. Xem _INTERN_QUERIES / _FRESHER_QUERIES.
+    """
     # --- Title + URL ---------------------------------------------------------
     title_a = card.select_one("h3.title a")
     if not title_a:
@@ -170,10 +205,11 @@ def _parse_card(card, category: str) -> Job | None:
         source="TopCV",
         location=location,
         salary=salary,
-        # URL TopCV đã filter exp=1,2 (không yêu cầu kinh nghiệm + dưới 1 năm)
-        # nên tất cả job đều là entry-level. Thêm tag để bộ lọc intern/fresher
-        # trong filters.py nhận ra được (FRESHER_KEYWORDS có "khong yeu cau kinh nghiem").
-        tags=["Không yêu cầu kinh nghiệm"],
+        # Card HTML không ghi cấp bậc, nên gán tag theo tham số URL đã dùng:
+        # position=50 → "Thực tập sinh" (khớp INTERN_KEYWORDS "thuc tap sinh"),
+        # exp=1,2 → "Không yêu cầu kinh nghiệm" (khớp FRESHER_KEYWORDS).
+        # Nhờ tag này filters.py phân loại được intern vs fresher.
+        tags=[level_tag],
         posted_text=posted_text,
         posted_date=posted_date,
         category=category,
@@ -263,21 +299,29 @@ def _fetch_playwright(url: str) -> str | None:
             return None
 
 
-def _parse_html(html: str, category: str) -> list[Job]:
+def _parse_html(
+    html: str, category: str, level_tag: str = "Không yêu cầu kinh nghiệm"
+) -> list[Job]:
     """Tách các tin từ HTML trang tìm kiếm TopCV."""
     soup = BeautifulSoup(html, "lxml")
     cards = soup.select("div.job-item-search-result")
     if not cards:
         title = soup.title.string.strip() if soup.title and soup.title.string else "?"
-        log.warning(
-            "TopCV %s: 0 card tìm thấy — page title=%r"
-            " (Cloudflare block page hoặc HTML structure thay đổi)",
-            category, title,
-        )
+        # Phân biệt "TopCV thật sự không có tin nào khớp" với "bị chặn / HTML
+        # đổi cấu trúc". Trang rỗng hợp lệ có title dạng
+        # "Tuyển dụng 0 việc làm ..." — đó là kết quả bình thường, không phải lỗi.
+        if _ZERO_RESULT_RE.search(title):
+            log.info("TopCV %s: TopCV không có tin nào khớp bộ lọc.", category)
+        else:
+            log.warning(
+                "TopCV %s: 0 card tìm thấy — page title=%r"
+                " (Cloudflare block page hoặc HTML structure thay đổi)",
+                category, title,
+            )
     jobs: list[Job] = []
     for card in cards:
         try:
-            job = _parse_card(card, category)
+            job = _parse_card(card, category, level_tag)
         except Exception:
             log.debug("TopCV: lỗi parse job-item-search-result", exc_info=True)
             continue
@@ -295,55 +339,87 @@ class TopCVSource(BaseSource):
 
     name = "TopCV"
 
+    def _fetch_html(self, url: str, label: str) -> str | None:
+        """Lấy HTML một URL, thử lần lượt 3 cách cho tới khi được."""
+        # Bước 1: curl_cffi (giả lập TLS Chrome)
+        try:
+            resp = curl_requests.get(
+                url,
+                impersonate=_IMPERSONATE,
+                headers={"Accept-Language": "vi,en-US;q=0.9,en;q=0.8"},
+                timeout=HTTP_TIMEOUT,
+            )
+            if resp.status_code == 200:
+                return resp.text
+            log.warning(
+                "TopCV %s: curl_cffi HTTP %s%s",
+                label, resp.status_code,
+                " — thử fallback" if resp.status_code == 403 else "",
+            )
+        except Exception as exc:
+            log.warning("TopCV %s: lỗi kết nối curl_cffi (%s)", label, exc)
+
+        # Bước 2: ScraperAPI residential proxy — bypass Cloudflare IP-reputation
+        # block (curl_cffi dùng Azure IP bị block, ScraperAPI dùng IP residential).
+        if _SCRAPER_API_KEY:
+            log.info("TopCV %s: thử ScraperAPI...", label)
+            html = _fetch_scraperapi(url, _SCRAPER_API_KEY)
+            if html is not None:
+                return html
+
+        # Bước 3: Playwright — chỉ bypass JS challenge, không bypass IP block.
+        if _PLAYWRIGHT_OK:
+            log.info("TopCV %s: thử Playwright...", label)
+            return _fetch_playwright(url)
+
+        return None
+
+    def _run_queries(
+        self, queries: list[tuple[str, str, str]], level_tag: str, kind: str
+    ) -> list[Job]:
+        """Chạy một bộ query và gán `level_tag` cho mọi tin thu được."""
+        jobs: list[Job] = []
+        for category, slug_label, url in queries:
+            label = f"{kind}/{slug_label}"
+            html = self._fetch_html(url, label)
+            if html is None:
+                time.sleep(REQUEST_DELAY)
+                continue
+            found = _parse_html(html, category, level_tag)
+            jobs.extend(found)
+            log.info("TopCV %-20s -> %2d tin", label, len(found))
+            time.sleep(REQUEST_DELAY)
+        return jobs
+
     def fetch(self) -> Iterable[Job]:
         if curl_requests is None:
             log.warning("TopCV: chưa cài curl_cffi, bỏ qua nguồn này.")
             return []
 
-        jobs: list[Job] = []
-        for category, url in _QUERIES.items():
-            html: str | None = None
+        # Hai bộ query chạy riêng vì tag cấp bậc gán khác nhau: position=50 cho
+        # tin thực tập, exp=1,2 cho tin fresher. Gộp chung một bộ như trước thì
+        # tin intern bị lẫn và filters.py không phân biệt được.
+        intern = self._run_queries(
+            _INTERN_QUERIES, "Thực tập sinh", "intern"
+        )
+        fresher = self._run_queries(
+            _FRESHER_QUERIES, "Không yêu cầu kinh nghiệm", "fresher"
+        )
 
-            # Bước 1: thử curl_cffi (giả lập TLS Chrome)
-            try:
-                resp = curl_requests.get(
-                    url,
-                    impersonate=_IMPERSONATE,
-                    headers={"Accept-Language": "vi,en-US;q=0.9,en;q=0.8"},
-                    timeout=HTTP_TIMEOUT,
-                )
-                if resp.status_code == 200:
-                    html = resp.text
-                else:
-                    log.warning(
-                        "TopCV %s: curl_cffi HTTP %s%s",
-                        category, resp.status_code,
-                        " — thử Playwright fallback" if resp.status_code == 403 and _PLAYWRIGHT_OK else "",
-                    )
-            except Exception as exc:
-                log.warning("TopCV %s: lỗi kết nối curl_cffi (%s)", category, exc)
+        # Cùng một tin có thể xuất hiện ở cả hai bộ (ví dụ "DevOps Intern" khớp
+        # cả position=50 lẫn exp=1,2). Ưu tiên bản từ bộ intern để giữ tag
+        # "Thực tập sinh" — nếu để bản fresher ghi đè thì tin thực tập bị xếp
+        # nhầm sang nhóm chỉ-xem-trên-web.
+        seen: dict[str, Job] = {}
+        for job in intern + fresher:
+            seen.setdefault(job.url, job)
 
-            # Bước 2: ScraperAPI residential proxy — bypass Cloudflare IP-reputation block
-            # (curl_cffi dùng Azure IP bị block; ScraperAPI dùng IP residential ngẫu nhiên)
-            if html is None and _SCRAPER_API_KEY:
-                log.info("TopCV %s: thử ScraperAPI...", category)
-                html = _fetch_scraperapi(url, _SCRAPER_API_KEY)
-
-            # Bước 3: Playwright (bypass JS challenge, không bypass IP-reputation block)
-            # Chỉ có tác dụng nếu vấn đề là JS challenge, không phải IP block.
-            if html is None and _PLAYWRIGHT_OK:
-                log.info("TopCV %s: thử Playwright...", category)
-                html = _fetch_playwright(url)
-
-            if html is None:
-                time.sleep(REQUEST_DELAY)
-                continue
-
-            found = _parse_html(html, category)
-            jobs.extend(found)
-            log.info("TopCV %-14s -> %2d tin", category, len(found))
-            time.sleep(REQUEST_DELAY)
-
+        jobs = list(seen.values())
+        log.info(
+            "TopCV tổng: %d tin (intern-query %d, fresher-query %d, trùng %d)",
+            len(jobs), len(intern), len(fresher),
+            len(intern) + len(fresher) - len(jobs),
+        )
         if not jobs:
             log.warning("TopCV không lấy được tin nào — có thể bị Cloudflare chặn IP.")
         return jobs
