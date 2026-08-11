@@ -1,0 +1,409 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Thực tập IT Hà Nội – 11/08/2026</title><style>
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #f0f4f8;
+  --surface: #ffffff;
+  --card:    #ffffff;
+  --card-h:  #f7f9fc;
+  --border:  #e2e8f0;
+  --border-h:#c7d2e0;
+  --text:    #0f172a;
+  --text-2:  #475569;
+  --text-3:  #94a3b8;
+  --brand:   #2563eb;
+  --green:   #10b981;
+  --amber:   #f59e0b;
+  --red:     #ef4444;
+  --r:       14px;
+  --r-sm:    9px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:      #0f1117;
+    --surface: #161b27;
+    --card:    #1c2333;
+    --card-h:  #232d42;
+    --border:  rgba(255,255,255,.08);
+    --border-h:rgba(255,255,255,.15);
+    --text:    #e2e8f0;
+    --text-2:  #94a3b8;
+    --text-3:  #4b5563;
+    --brand:   #60a5fa;
+    --green:   #34d399;
+    --amber:   #fbbf24;
+    --red:     #f87171;
+  }
+}
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 400 15px/1.65
+    ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",
+    Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 80px;
+  min-height: 100vh;
+}
+a { color: var(--brand); text-decoration: none; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+
+/* ── Header ───────────────────────────────────────────────── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 28px 0 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.header-top {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 16px;
+}
+.site-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  display: grid; place-items: center;
+  font-size: 20px; flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(37,99,235,.3);
+}
+.site-name {
+  font-size: 14px; font-weight: 700; color: var(--text);
+  letter-spacing: -.01em;
+}
+.badge-live {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase;
+  background: rgba(16,185,129,.12);
+  color: #059669;
+  border-radius: 999px; padding: 3px 9px;
+}
+.badge-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16,185,129,.2);
+  flex-shrink: 0;
+}
+h1 {
+  font-size: clamp(24px, 5vw, 38px);
+  font-weight: 800; letter-spacing: -.04em; line-height: 1.1;
+  margin-bottom: 8px;
+}
+.h1-accent {
+  background: linear-gradient(100deg, #2563eb 0%, #7c3aed 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.sub { color: var(--text-2); font-size: 14px; margin-bottom: 14px; }
+.meta-row {
+  display: flex; flex-wrap: wrap; gap: 6px 18px;
+  color: var(--text-3); font-size: 12.5px;
+}
+
+/* ── Stat grid ─────────────────────────────────────────────── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.stat {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 18px 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  transition: box-shadow .2s, border-color .2s;
+}
+.stat:hover {
+  border-color: var(--border-h);
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+.stat-icon {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 20px; margin-bottom: 12px;
+  background: var(--ic-bg, #eff6ff);
+}
+.stat-val {
+  font-size: 34px; font-weight: 800;
+  letter-spacing: -.05em; line-height: 1;
+  color: var(--c, var(--brand));
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 4px;
+}
+.stat-label {
+  font-size: 12px; font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 6px;
+}
+.stat-delta {
+  font-size: 11.5px; font-weight: 600;
+  display: flex; align-items: center; gap: 3px;
+}
+.stat-delta.up   { color: #10b981; }
+.stat-delta.down { color: #ef4444; }
+.stat-delta.flat { color: var(--text-3); }
+
+/* ── Chips ─────────────────────────────────────────────────── */
+.chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 4px 0 16px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 999px; padding: 5px 13px;
+  font-size: 12.5px; color: var(--text-2);
+  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+.chip strong { color: var(--text); font-variant-numeric: tabular-nums; }
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Section heading ───────────────────────────────────────── */
+.sec-head {
+  display: flex; align-items: center; gap: 10px;
+  margin: 28px 0 14px;
+}
+.sec-head-line {
+  flex: 1; height: 1px; background: var(--border);
+}
+.sec-title {
+  font-size: 11px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .13em;
+  color: var(--text-3); white-space: nowrap;
+}
+
+/* ── Layout một cột ────────────────────────────────────────────
+   Trước đây dùng grid 300px + 1fr với khối fresher nhét trong cột
+   300px. Card fresher trong cột hẹp bị wrap cao gấp đôi, nên chỉ cần
+   hơn chục tin là cột trái dài hơn cột phải và trang mất cân. Giờ mọi
+   danh sách nằm trong một cột rộng, biểu đồ trải ngang phía trên. */
+.list-wrap { min-width: 0; }
+
+/* ── Category heading ─────────────────────────────────────── */
+.cat-head {
+  display: flex; align-items: center; gap: 10px;
+  margin: 24px 0 12px;
+}
+.cat-icon {
+  width: 32px; height: 32px; flex-shrink: 0;
+  border-radius: 9px;
+  display: grid; place-items: center;
+  font-size: 15px;
+  background: var(--g, var(--card));
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.cat-name { font-size: 15.5px; font-weight: 700; letter-spacing: -.01em; }
+.badge-count {
+  font-size: 11.5px; font-weight: 700;
+  color: var(--text-3); background: var(--card);
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 2px 9px; font-variant-numeric: tabular-nums;
+}
+
+/* ── Filter tabs ───────────────────────────────────────────── */
+.filter-wrap { margin-bottom: 20px; }
+.filter-tabs { display: flex; flex-wrap: wrap; gap: 7px; }
+.filter-tabs input { position: absolute; opacity: 0; pointer-events: none; }
+.filter-tabs label {
+  cursor: pointer; user-select: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 999px; padding: 6px 14px;
+  font-size: 13px; font-weight: 600; color: var(--text-2);
+  transition: all .15s ease;
+}
+.filter-tabs label:hover { border-color: var(--border-h); color: var(--text); }
+#f-all:checked    ~ .filter-wrap label[for="f-all"],
+#f-devops:checked ~ .filter-wrap label[for="f-devops"],
+#f-java:checked   ~ .filter-wrap label[for="f-java"],
+#f-data:checked   ~ .filter-wrap label[for="f-data"] {
+  background: var(--text); color: var(--bg);
+  border-color: var(--text);
+}
+/* Tab fresher dùng màu amber để phân biệt với 3 tab ngành. Pha màu từ
+   var(--amber) thay vì hardcode, để dark mode tự đổi theo (--amber sáng
+   hơn ở dark mode). */
+.filter-tabs label.tab-fresher {
+  color: var(--amber);
+  color: color-mix(in srgb, var(--amber) 75%, var(--text));
+  border-color: var(--border);
+  border-color: color-mix(in srgb, var(--amber) 45%, transparent);
+}
+.filter-tabs label.tab-fresher:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+#f-fresher:checked ~ .filter-wrap label[for="f-fresher"] {
+  background: var(--amber); border-color: var(--amber);
+  color: #1c1200;   /* amber là màu sáng ở cả 2 theme → chữ tối luôn đọc được */
+}
+/* Ẩn nhóm không được chọn. Ba tab ngành đã tự loại fresher qua :not(),
+   chỉ cần thêm một dòng cho tab "Tất cả" để nó chỉ hiện tin thực tập. */
+#f-devops:checked  ~ .filter-wrap .cats .cat:not([data-cat="devops"]),
+#f-java:checked    ~ .filter-wrap .cats .cat:not([data-cat="backend_java"]),
+#f-data:checked    ~ .filter-wrap .cats .cat:not([data-cat="data_engineer"]),
+#f-fresher:checked ~ .filter-wrap .cats .cat:not([data-cat="fresher"]),
+#f-all:checked     ~ .filter-wrap .cats .cat[data-cat="fresher"]
+  { display: none; }
+
+/* ── Job card ──────────────────────────────────────────────── */
+.job-card {
+  display: block; color: inherit;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px 18px 14px;
+  margin-bottom: 9px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .18s, background .18s, transform .18s, box-shadow .18s;
+}
+.job-card::before {
+  content: "";
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--stripe, var(--green));
+  border-radius: var(--r) 0 0 var(--r);
+}
+.job-card:hover {
+  border-color: var(--border-h);
+  background: var(--card-h);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(0,0,0,.4);
+}
+.job-card:hover .job-title { color: var(--brand); }
+.job-title {
+  font-size: 15.5px; font-weight: 700;
+  line-height: 1.4; letter-spacing: -.015em;
+  padding-left: 10px;
+  transition: color .18s;
+}
+.job-company {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--text-2); font-size: 13.5px;
+  margin-top: 5px; padding-left: 10px;
+}
+.job-meta {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  margin-top: 10px; padding-left: 10px;
+}
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; border-radius: 6px;
+  padding: 3px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.tag.new-tag {
+  color: var(--green); font-weight: 700;
+  border-color: rgba(34,211,160,.25);
+  background: rgba(34,211,160,.08);
+}
+.tag.pay-tag {
+  color: var(--amber); font-weight: 600;
+  border-color: rgba(255,179,71,.2);
+  background: rgba(255,179,71,.07);
+}
+.tag.src-tag { font-weight: 600; color: var(--text-2); }
+/* Card fresher: nền pha nhẹ sắc amber lên trên var(--card) nên hoạt động ở
+   cả light và dark mode. Màu vạch bên trái set inline trong _job_html(). */
+.job-card.fresher {
+  background: var(--card);   /* fallback nếu trình duyệt chưa có color-mix */
+  background: color-mix(in srgb, var(--amber) 6%, var(--card));
+}
+.job-card.fresher:hover {
+  background: var(--card-h);
+  background: color-mix(in srgb, var(--amber) 11%, var(--card-h));
+}
+
+/* ── Chart ─────────────────────────────────────────────────── */
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px 20px 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+.chart {
+  display: flex; align-items: flex-end;
+  gap: 6px; height: 120px;
+}
+.chart-col {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: flex-end; align-items: center; gap: 4px;
+}
+.chart-val {
+  font-size: 11px; color: var(--text-3); font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.chart-bar {
+  width: 100%; min-height: 3px;
+  border-radius: 4px 4px 2px 2px;
+  background: var(--green);
+  opacity: .6;
+  transition: opacity .2s;
+}
+.chart-col:hover .chart-bar { opacity: 1; }
+.chart-col.today .chart-bar { background: var(--brand); opacity: 1; }
+.chart-col.zero .chart-bar { background: var(--border); opacity: 1; }
+.chart-x {
+  display: flex; gap: 6px; margin-top: 8px;
+}
+.chart-x div {
+  flex: 1; text-align: center;
+  font-size: 10px; color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Ghi chú nhóm fresher ─────────────────────────────────── */
+.fresher-note {
+  font-size: 13px; color: var(--text-3);
+  background: var(--surface); border-radius: var(--r-sm);
+  padding: 10px 14px; margin-bottom: 14px;
+  border-left: 3px solid var(--amber);
+}
+
+/* ── Archive ───────────────────────────────────────────────── */
+.arch-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+.arch-grid a {
+  display: block;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 6px 12px;
+  font-size: 13px; color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  transition: border-color .15s, color .15s;
+}
+.arch-grid a:hover { border-color: var(--border-h); color: var(--text); }
+
+/* ── Empty state ───────────────────────────────────────────── */
+.empty-state {
+  background: var(--card); border: 1px dashed var(--border-h);
+  border-radius: var(--r); padding: 32px 20px;
+  text-align: center; color: var(--text-3); font-size: 14px;
+}
+
+/* ── Footer / misc ─────────────────────────────────────────── */
+.back-link {
+  display: inline-flex; align-items: center; gap: 7px;
+  margin-top: 32px; font-size: 14px; color: var(--text-2);
+}
+.back-link:hover { color: var(--text); }
+footer {
+  margin-top: 56px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--text-3); font-size: 12.5px;
+}
+
+/* ── Mobile ────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .stat-val { font-size: 26px; }
+  .stat-icon { width: 36px; height: 36px; font-size: 17px; }
+  .job-title { font-size: 14.5px; }
+}
+</style></head><body><header><div class="wrap"><div class="header-top"><div class="site-icon">📂</div><div><div class="site-name">Thực Tập IT Hà Nội</div><span class="badge-live"><span class="badge-dot"></span>Cập nhật hàng ngày</span></div></div><h1><span class="h1-accent">11/08/2026</span></h1><p class="sub">Lưu trữ tin thực tập</p><div class="meta-row"><span>📅 11/08/2026</span><span>🔢 11 tin intern</span></div><a class="back-link" href="https://tienml.github.io/Bot-tele-jobs/">← Trang chính</a></div></header><main class="wrap"><div class="stats"><div class="stat" style="--c:#2563eb"><div class="stat-icon" style="background:#dbeafe">📋</div><div class="stat-val">11</div><div class="stat-label">Tin thực tập</div><div class="stat-delta up">↑ +3 so với hôm qua</div></div><div class="stat" style="--c:#10b981"><div class="stat-icon" style="background:#d1fae5">🆕</div><div class="stat-val">11</div><div class="stat-label">Đăng hôm nay</div></div><div class="stat" style="--c:#f59e0b"><div class="stat-icon" style="background:#fef3c7">🌱</div><div class="stat-val">8</div><div class="stat-label">Fresher</div></div><div class="stat" style="--c:#8b5cf6"><div class="stat-icon" style="background:#ede9fe">🌐</div><div class="stat-val">3</div><div class="stat-label">Nguồn có tin</div></div></div><div class="chips"><span class="chip"><span class="dot" style="background:#f97316"></span>🛠 DevOps <strong>4</strong></span><span class="chip"><span class="dot" style="background:#8b5cf6"></span>☕ Backend Java <strong>0</strong></span><span class="chip"><span class="dot" style="background:#06b6d4"></span>📊 Data Engineer <strong>7</strong></span></div><div class="sec-head"><div class="sec-head-line"></div><div class="sec-title">💼 Danh sách tin</div><div class="sec-head-line"></div></div><div class="list-wrap"><input type="radio" name="fcat" id="f-all" checked><input type="radio" name="fcat" id="f-devops"><input type="radio" name="fcat" id="f-java"><input type="radio" name="fcat" id="f-data"><input type="radio" name="fcat" id="f-fresher"><div class="filter-wrap"><div class="filter-tabs"><label for="f-all">Tất cả <strong>11</strong></label><label for="f-devops">🛠 DevOps <strong>4</strong></label><label for="f-java">☕ Java <strong>0</strong></label><label for="f-data">📊 Data <strong>7</strong></label><label class="tab-fresher" for="f-fresher">🌱 Fresher <strong>8</strong></label></div><div class="cats"><div class="cat" data-cat="devops"><div class="cat-head"><div class="cat-icon" style="background:linear-gradient(135deg,#f97316,#ea580c)">🛠</div><span class="cat-name">DevOps</span><span class="badge-count">4 tin</span></div><a class="job-card" href="https://glints.com/vn/opportunities/jobs/embedded-intern/b0ba486e-1687-4b93-815a-f49945e96cd8" target="_blank" rel="noopener" style="--stripe:#00c896"><div class="job-title">Embedded Intern</div><div class="job-company"><span>Panasonic R&amp;D Center Việt Nam</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Quận Ba Đình, Hà Nội, Vietnam</span></div><div class="job-meta"><span class="tag new-tag">🆕 Mới</span><span class="tag pay-tag">💰 6,500,000 - 6,580,000 VND/tháng</span><span class="tag src-tag" style="color:#00c896">Glints</span><span class="tag">🕐 4 ngày trước</span><span class="tag">Java</span><span class="tag">Linux OS</span><span class="tag">CI/CD</span><span class="tag">Python</span><span class="tag">full time</span></div></a><a class="job-card" href="https://www.topcv.vn/viec-lam/model-based-system-engineer-mbse-internship-thuc-tap-sinh-ky-su-he-thong-sinh-vien-nam-cuoi-nganh-dien-dien-tu-co-dien-tu-o-to-domain-embedded-automotive/1632798.html" target="_blank" rel="noopener" style="--stripe:#00b14f"><div class="job-title">Model-Based System Engineer (MBSE) Internship - Thực Tập Sinh Kỹ Sư Hệ Thống (Sinh Viên Năm Cuối Ngành Điện &amp; Điện Tử, Cơ Điện Tử, Ô Tô; Domain Embedded &amp; Automotive)</div><div class="job-company"><span>Công ty Cổ phần Vietsol</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Hà Nội</span></div><div class="job-meta"><span class="tag new-tag">🆕 Mới</span><span class="tag pay-tag">💰 1.5 - 2 triệu</span><span class="tag src-tag" style="color:#00b14f">TopCV</span><span class="tag">🕐 3 tuần trước</span><span class="tag">Thực tập sinh</span></div></a><a class="job-card" href="https://www.topcv.vn/brand/fptsoftwareacademy/tuyen-dung/thuc-tap-sinh-devops-j1683787.html" target="_blank" rel="noopener" style="--stripe:#00b14f"><div class="job-title">Thực Tập Sinh Devops</div><div class="job-company"><span>FPT Software</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Hà Nội</span></div><div class="job-meta"><span class="tag new-tag">🆕 Mới</span><span class="tag pay-tag">💰 Tới 7.5 triệu</span><span class="tag src-tag" style="color:#00b14f">TopCV</span><span class="tag">🕐 3 tuần trước</span><span class="tag">Không yêu cầu kinh nghiệm</span></div></a><a class="job-card" href="https://www.topcv.vn/viec-lam/fresher-system-engineer/2245665.html" target="_blank" rel="noopener" style="--stripe:#00b14f"><div class="job-title">Fresher System Engineer</div><div class="job-company"><span>Công ty cổ phần Hạ tầng Viễn thông CMC Telecom</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Hà Nội</span></div><div class="job-meta"><span class="tag new-tag">🆕 Mới</span><span class="tag pay-tag">💰 Thoả thuận</span><span class="tag src-tag" style="color:#00b14f">TopCV</span><span class="tag">🕐 2 tuần trước</span><span class="tag">Thực tập sinh</span></div></a></div><div class="cat" data-cat="backend_java"><div class="cat-head"><div class="cat-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)">☕</div><span class="cat-name">Backend Java</span><span class="badge-count">0 tin</span></div><div class="empty-state">Chưa có tin nào hôm nay.</div></div><div class="cat" data-cat="data_engineer"><div class="cat-head"><div class="cat-icon" style="background:linear-gradient(135deg,#06b6d4,#0891b2)">📊</div><span class="cat-name">Data Engineer</span><span class="badge-count">7 tin</span></div><a class="job-card" href="https://glints.com/vn/opportunities/jobs/tts-data-engineer/a073e698-8776-4739-a77a-afc1b88e7f5a" target="_blank" rel="noopener" style="--stripe:#00c896"><div class="job-title">TTS DATA ENGINEER</div><div class="job-company"><span>Công ty TNHH Công nghệ và Thương mại Lifesup</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Quận Cầu Giấy, Hà Nội, Vietnam</span></div><div class="job-meta"><span class="tag new-tag">🆕 Mới</span><span class="tag pay-tag">💰 2,000,000 - 5,000,000 VND/tháng</span><span class="tag src-tag" style="color:#00c896">Glints</span><span class="tag">🕐 Hôm qua</span><span class="tag">SQL</span><span class="tag">Data Engineering</span><span class="tag">Etl</span><span class="tag">Hadoop</span><span class="tag">Python</span></div></a><a class="job-card" href="https://www.topcv.vn/viec-lam/data-analyst-intern-tro-cap-up-to-6-trieu-thang/2266622.html" target="_blank" rel="noopener" style="--stripe:#00b14f"><div class="job-title">Data Analyst Intern (Trợ Cấp Up To 6 Triệu/ Tháng)</div><div class="job-company"><span>CÔNG TY TNHH THƯƠNG MẠI QUỐC TẾ BLUESTARS VIỆT NAM</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Hà Nội</span></div><div class="job-meta"><span class="tag new-tag">🆕 Mới</span><span class="tag pay-tag">💰 4 - 6 triệu</span><span class="tag src-tag" style="color:#00b14f">TopCV</span><span class="tag">🕐 Hôm qua</span><span class="tag">Thực tập sinh</span></div></a><a class="job-card" href="https://www.topcv.vn/viec-lam/data-analyst-intern-game-industry/2248994.html" target="_blank" rel="noopener" style="--stripe:#00b14f"><div class="job-title">Data Analyst Intern (Game Industry)</div><div class="job-company"><span>SonatGame Studio</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Hà Nội</span></div><div class="job-meta"><span class="tag new-tag">🆕 Mới</span><span class="tag pay-tag">💰 6 - 8 triệu</span><span class="tag src-tag" style="color:#00b14f">TopCV</span><span class="tag">🕐 2 tuần trước</span><span class="tag">Thực tập sinh</span></div></a><a class="job-card" href="https://www.vietnamworks.com/thuc-tap-sinh-phan-tich-du-lieu-and-nghien-cuu-san-pham-2070664-jv" target="_blank" rel="noopener" style="--stripe:#3b9eff"><div class="job-title">Thực Tập Sinh Phân Tích Dữ Liệu &amp; Nghiên Cứu Sản Phẩm</div><div class="job-company"><span>Công Ty Cổ Phần Chứng Khoán SSI</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Hà Nội</span></div><div class="job-meta"><span class="tag new-tag">🆕 Mới</span><span class="tag src-tag" style="color:#3b9eff">VietnamWorks</span><span class="tag">🕐 5 ngày trước</span><span class="tag">Information Systems</span><span class="tag">Financial Products</span><span class="tag">Securities</span><span class="tag">excel</span><span class="tag">Data analysis</span></div></a><a class="job-card" href="https://www.vietnamworks.com/thuc-tap-sinh-kinh-doanh-quoc-te-2082165-jv" target="_blank" rel="noopener" style="--stripe:#3b9eff"><div class="job-title">Thực Tập Sinh Kinh Doanh Quốc Tế</div><div class="job-company"><span>CÔNG TY TNHH NHÔM MINH DŨNG</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Hà Nội</span></div><div class="job-meta"><span class="tag new-tag">🆕 Mới</span><span class="tag pay-tag">💰 $3,000,000 – $5,000,000</span><span class="tag src-tag" style="color:#3b9eff">VietnamWorks</span><span class="tag">🕐 3 tuần trước</span><span class="tag">Ham Học Hỏi</span><span class="tag">Kỹ Năng Bán Hàng</span><span class="tag">Phân Tích Dữ Liệu</span><span class="tag">Quản Trị Kinh Doanh</span><span class="tag">Tiếng Anh Giao Tiếp</span></div></a><a class="job-card" href="https://glints.com/vn/opportunities/jobs/business-intelligence-talent-intern-full-time/d8a2f764-fe27-4c2e-a19f-df713efb6fdc" target="_blank" rel="noopener" style="--stripe:#00c896"><div class="job-title">BUSINESS INTELLIGENCE TALENT INTERN (Full-time)</div><div class="job-company"><span>AdFlex</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Quận Nam Từ Liêm, Hà Nội, Vietnam</span></div><div class="job-meta"><span class="tag new-tag">🆕 Mới</span><span class="tag pay-tag">💰 5,000,000 - 7,000,000 VND/tháng</span><span class="tag src-tag" style="color:#00c896">Glints</span><span class="tag">🕐 11 tuần trước</span><span class="tag">Microsoft Excel</span><span class="tag">Data Visualization</span><span class="tag">Data Analysis</span><span class="tag">SQL</span><span class="tag">Power BI</span></div></a><a class="job-card" href="https://glints.com/vn/opportunities/jobs/data-analyst-intern/dae798a0-af7f-4be6-9787-9073781b013d" target="_blank" rel="noopener" style="--stripe:#00c896"><div class="job-title">Data Analyst Intern</div><div class="job-company"><span>MH Solution</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Quận Cầu Giấy, Hà Nội, Vietnam</span></div><div class="job-meta"><span class="tag new-tag">🆕 Mới</span><span class="tag src-tag" style="color:#00c896">Glints</span><span class="tag">🕐 18 tuần trước</span><span class="tag">SQL</span><span class="tag">Data Analysis</span><span class="tag">Microsoft Excel</span><span class="tag">full time</span></div></a></div><div class="cat" data-cat="fresher"><div class="cat-head"><div class="cat-icon" style="background:linear-gradient(135deg,#fbbf24,#f59e0b)">🌱</div><span class="cat-name">Fresher / Junior</span><span class="badge-count">8 tin</span></div><p class="fresher-note">Nhóm tham khảo, không gửi qua Telegram. Các tin này yêu cầu 0 năm kinh nghiệm hoặc ghi rõ "fresher welcome".</p><a class="job-card fresher" href="https://www.vietnamworks.com/data-analyst--2093156-jv" target="_blank" rel="noopener" style="--stripe:var(--amber)"><div class="job-title">Data Analyst</div><div class="job-company"><span>Turnkey Fba</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Hà Nội</span></div><div class="job-meta"><span class="tag pay-tag">💰 $8,000,000 – $13,000,000</span><span class="tag src-tag" style="color:#3b9eff">VietnamWorks</span><span class="tag">🕐 Hôm qua</span><span class="tag">Coding</span><span class="tag">Data Entry</span><span class="tag">Data Operations</span><span class="tag">E-commerce</span><span class="tag">Business Analyst</span></div></a><a class="job-card fresher" href="https://glints.com/vn/opportunities/jobs/business-intelligence-fresher-full-time/283e7f3c-94e6-42af-b621-f308404a6896" target="_blank" rel="noopener" style="--stripe:var(--amber)"><div class="job-title">BUSINESS INTELLIGENCE FRESHER (Full-time)</div><div class="job-company"><span>AdFlex</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Quận Nam Từ Liêm, Hà Nội, Vietnam</span></div><div class="job-meta"><span class="tag pay-tag">💰 8,000,000 - 12,000,000 VND/tháng</span><span class="tag src-tag" style="color:#00c896">Glints</span><span class="tag">🕐 1 tuần trước</span><span class="tag">Data Visualization</span><span class="tag">Data Analysis</span><span class="tag">Python</span><span class="tag">Tableau</span><span class="tag">Microsoft Excel</span></div></a><a class="job-card fresher" href="https://www.topcv.vn/viec-lam/fresher-java/1239367.html" target="_blank" rel="noopener" style="--stripe:var(--amber)"><div class="job-title">Fresher Java</div><div class="job-company"><span>CÔNG TY CỔ PHẦN ADVANCE TECH VIỆT NAM</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Hà Nội</span></div><div class="job-meta"><span class="tag pay-tag">💰 8 - 12 triệu</span><span class="tag src-tag" style="color:#00b14f">TopCV</span><span class="tag">🕐 1 tuần trước</span><span class="tag">Không yêu cầu kinh nghiệm</span></div></a><a class="job-card fresher" href="https://www.topcv.vn/viec-lam/ai-automation-specialist/2256593.html" target="_blank" rel="noopener" style="--stripe:var(--amber)"><div class="job-title">AI Automation Specialist</div><div class="job-company"><span>CÔNG TY CỔ PHẦN VẬN TẢI BIỂN CONTAINER THÁI BÌNH DƯƠNG</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Hà Nội</span></div><div class="job-meta"><span class="tag pay-tag">💰 16 - 20 triệu</span><span class="tag src-tag" style="color:#00b14f">TopCV</span><span class="tag">🕐 1 tuần trước</span><span class="tag">Không yêu cầu kinh nghiệm</span></div></a><a class="job-card fresher" href="https://www.topcv.vn/viec-lam/fresher-java-developer/1954519.html" target="_blank" rel="noopener" style="--stripe:var(--amber)"><div class="job-title">Fresher Java Developer</div><div class="job-company"><span>CÔNG TY CỔ PHẦN ĐẦU TƯ CÔNG NGHỆ VÀ THƯƠNG MẠI SOFTDREAMS</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Hà Nội</span></div><div class="job-meta"><span class="tag pay-tag">💰 8 - 12 triệu</span><span class="tag src-tag" style="color:#00b14f">TopCV</span><span class="tag">Không yêu cầu kinh nghiệm</span></div></a><a class="job-card fresher" href="https://www.topcv.vn/viec-lam/fresh-junior-java-developer-bank-project-ha-noi/1984265.html" target="_blank" rel="noopener" style="--stripe:var(--amber)"><div class="job-title">Fresh/Junior Java Developer - Bank Project (Hà Nội)</div><div class="job-company"><span>CÔNG TY TRÁCH NHIỆM HỮU HẠN CÔNG NGHỆ BANKFINITY</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Hà Nội</span></div><div class="job-meta"><span class="tag pay-tag">💰 7 - 17 triệu</span><span class="tag src-tag" style="color:#00b14f">TopCV</span><span class="tag">🕐 3 tuần trước</span><span class="tag">Không yêu cầu kinh nghiệm</span></div></a><a class="job-card fresher" href="https://www.topcv.vn/brand/vpbank/tuyen-dung/chuyen-vien-phat-trien-giai-phap-cntt-azure-cloud-id-6275-vpbank-young-talents-2026-j2248011.html" target="_blank" rel="noopener" style="--stripe:var(--amber)"><div class="job-title">Chuyên Viên Phát Triển Giải Pháp CNTT (Azure, Cloud) - ID 6275 - VPBank Young Talents 2026</div><div class="job-company"><span>Ngân Hàng TMCP Việt Nam Thịnh Vượng (VPBank)</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Hà Nội</span></div><div class="job-meta"><span class="tag pay-tag">💰 Thoả thuận</span><span class="tag src-tag" style="color:#00b14f">TopCV</span><span class="tag">🕐 2 tuần trước</span><span class="tag">Không yêu cầu kinh nghiệm</span></div></a><a class="job-card fresher" href="https://glints.com/vn/opportunities/jobs/junior-developer/e53f3121-8534-42a9-8982-4c8ba76738a4" target="_blank" rel="noopener" style="--stripe:var(--amber)"><div class="job-title">Junior Developer</div><div class="job-company"><span>Avis Việt Nam</span><span class="text-3" style="color:var(--text-3)">·</span><span style="color:var(--text-3);font-size:12.5px">Quận Hai Bà Trưng, Hà Nội, Vietnam</span></div><div class="job-meta"><span class="tag pay-tag">💰 500,000 - 1,000,000 VND/tháng</span><span class="tag src-tag" style="color:#00c896">Glints</span><span class="tag">🕐 20 tuần trước</span><span class="tag">C++</span><span class="tag">MySQL</span><span class="tag">Java</span><span class="tag">full time</span></div></a></div></div></div></div><footer>Dữ liệu tổng hợp tự động từ ITviec, VietnamWorks, Glints, LinkedIn, TopCV.</footer></main></body></html>
